@@ -34,7 +34,7 @@ class Taleo {
 
   private function get_host_url() {
     $url = $this->dispatcher_url.'/'.$this->company;
-    $request = $this->query($url);
+    $request = $this->get_client($url);
     $response = $request->get()->send();
     $response = json_decode($response->getBody(true));
 
@@ -52,7 +52,7 @@ class Taleo {
       "password" => $this->password
     );
 
-    $client = $this->query($this->endpoint('login'));
+    $client = $this->get_client($this->endpoint('login'));
     $request = $client->post($this->endpoint('login'),null,$data);
     $response = json_decode($request->send()->getBody(true));
 
@@ -67,16 +67,10 @@ class Taleo {
 
   }
 
-  function query($url) {
-    if (!self::$client) {
-      self::$client = new Guzzle\Http\Client(null, array(
-        'ssl.certificate_authority' => false,
-      ));
-    }
+  function get_client($url) {
     return new Guzzle\Service\Client($url, array(
       'ssl.certificate_authority' => false,
     ));
-    //return self::$client;
   }
 
   public function request($url, $method = 'GET', $data = array()) {
@@ -85,12 +79,17 @@ class Taleo {
       $url = $this->endpoint($url);
     }
 
-    $client = $this->query($url);
+    $client = $this->get_client($url);
 
     if ($method == 'GET') {
-      $request = $client->get();
+      $request = $client->get($url);
+      foreach ($data as $key => $value) {
+        $request->getQuery()->set($key, $value);
+      }
     }
+
     if ($method == 'POST') {
+      $data = array_merge($data, array('in0' => $this->token));
       $request = $client->post($url, null, $data);
     }
 
