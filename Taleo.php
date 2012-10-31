@@ -23,27 +23,6 @@ class Taleo {
     $this->connect();
   }
 
-  /**
-   * Performs an HTTP request.
-   *
-   * @param string $url
-   *   The url to fetch.
-   *
-   * @return string
-   *   The result.
-   */
-  function query($url) {
-    if (!self::$client) {
-      self::$client = new Guzzle\Http\Client(null, array(
-        'ssl.certificate_authority' => false,
-      ));
-    }
-    return new Guzzle\Service\Client($url, array(
-      'ssl.certificate_authority' => false,
-    ));
-    //return self::$client;
-  }
-
   public function endpoint($name) {
     return $this->host_url . $name;
   }
@@ -86,6 +65,18 @@ class Taleo {
     }
     echo "Token set to ".$this->token."\n";
 
+  }
+
+  function query($url) {
+    if (!self::$client) {
+      self::$client = new Guzzle\Http\Client(null, array(
+        'ssl.certificate_authority' => false,
+      ));
+    }
+    return new Guzzle\Service\Client($url, array(
+      'ssl.certificate_authority' => false,
+    ));
+    //return self::$client;
   }
 
   public function request($url, $method = 'GET', $data = array()) {
