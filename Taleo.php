@@ -13,15 +13,15 @@ class Taleo {
   static $instance;
   private static $client;
 
-	function __construct($username, $password, $company) {
+  function __construct($username, $password, $company) {
     self::$instance = &$this;
 
-		$this->company = $company;
-		$this->username = $username;
-		$this->password = $password;
+    $this->company = $company;
+    $this->username = $username;
+    $this->password = $password;
 
     $this->connect();
-	}
+  }
 
   /**
    * Performs an HTTP request.
@@ -40,38 +40,38 @@ class Taleo {
     }
     return new Guzzle\Service\Client($url, array(
       'ssl.certificate_authority' => false,
-      ));
+    ));
     //return self::$client;
   }
 
-	public function endpoint($name) {
-		return $this->host_url . $name;
-	}
+  public function endpoint($name) {
+    return $this->host_url . $name;
+  }
 
-	public function connect() {
-		$this->get_host_url();
-		$this->get_token();
-	}
+  public function connect() {
+    $this->get_host_url();
+    $this->get_token();
+  }
 
-	private function get_host_url() {
+  private function get_host_url() {
     $url = $this->dispatcher_url.'/'.$this->company;
-		$request = $this->query($url);
+    $request = $this->query($url);
     $response = $request->get()->send();
     $response = json_decode($response->getBody(true));
 
-		if($response->status->success == 1) {
-			$this->host_url = $response->response->URL;
-		} else {
-			throw new Exception($response->status->detail->errormessage);
-		}
-	}
+    if($response->status->success == 1) {
+      $this->host_url = $response->response->URL;
+    } else {
+      throw new Exception($response->status->detail->errormessage);
+    }
+  }
 
-	private function get_token() {
-		$data = array(
-			"orgCode" => $this->company,
-			"userName" => $this->username,
-			"password" => $this->password
-		);
+  private function get_token() {
+    $data = array(
+      "orgCode" => $this->company,
+      "userName" => $this->username,
+      "password" => $this->password
+    );
 
     $client = $this->query($this->endpoint('login'));
     $request = $client->post($this->endpoint('login'),null,$data);
@@ -80,19 +80,19 @@ class Taleo {
     $request->addCookie('authToken', $response->response->authToken);
 
     if($response->status->success == 1) {
-			$this->token = $response->response->authToken;
-		} else {
-			throw new Exception($response->status->detail->errormessage);
-		}
+      $this->token = $response->response->authToken;
+    } else {
+      throw new Exception($response->status->detail->errormessage);
+    }
     echo "Token set to ".$this->token."\n";
 
-	}
+  }
 
   public function request($url, $method = 'GET', $data = array()) {
 
     if(strpos($url, "https://") === false) {
-			$url = $this->endpoint($url);
-		}
+      $url = $this->endpoint($url);
+    }
 
     $client = $this->query($url);
 
@@ -105,6 +105,6 @@ class Taleo {
 
     $request->addCookie('authToken', $this->token);
     $request->addHeader('content-type', 'application/json');
-		return $request->send()->getBody(true);
+    return $request->send()->getBody(true);
   }
 }
