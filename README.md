@@ -32,7 +32,11 @@ Examples
 ```php
 <?php
 require("./guzzle.phar");
+require('./Taleo/Collections/Requisitions.php');
+require('./Taleo/Objects/Requisition.php');
 require('./Taleo/Main/Taleo.php');
+
+use \Taleo\Main\Taleo as Taleo;
 
 $user = '******';
 $password = '******';
