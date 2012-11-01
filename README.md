@@ -50,7 +50,8 @@ $company = '******';
 $taleo = new Taleo($user, $password, $company);
 
 // See the Monolog documentation to check which levels are available.
-// By default, Taleo PHP Library doesn't log anything (log level set to ALERT).
+// By default, Taleo PHP Library doesn't log anything (log level set to ALERT)
+// except ALERT, triggered by errors.
 // If you change this to DEBUG, it will log almost everything.
 // By default, the logfile is in the default PHP temporary directory,
 // Under the name of "Taleo.log"

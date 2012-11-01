@@ -52,7 +52,7 @@ class Taleo {
       $this->token = $this->get_token();
     }
 
-    $this->logger->addDebug("Login in, token set to : " . $this->token);
+    $this->logger->AddInfo("Login in, token set to : " . $this->token);
   }
 
   private function get_host_url() {
@@ -61,8 +61,8 @@ class Taleo {
     $response = json_decode($request);
     $this->host_url = $response->response->URL;
 
-    $this->logger->addDebug("Using Taleo API Version: " . $this->taleo_api_version);
-    $this->logger->addDebug("Host url set to : " . $this->host_url);
+    $this->logger->AddInfo("Using Taleo API Version: " . $this->taleo_api_version);
+    $this->logger->AddInfo("Host url set to : " . $this->host_url);
   }
 
   private function get_token() {
@@ -99,10 +99,10 @@ class Taleo {
       $response = json_decode($response);
       $file = tempnam(sys_get_temp_dir(), 'Taleo-');
       file_put_contents($file, $response->response->authToken);
-      $this->logger->addDebug("Token file is too old or inexistant.");
+      $this->logger->AddInfo("Token file is too old or inexistant.");
     }
 
-    $this->logger->addDebug("Temporary token file: " . $file);
+    $this->logger->AddInfo("Temporary token file: " . $file);
     return file_get_contents($file);
   }
 
@@ -148,7 +148,7 @@ class Taleo {
 
     $this->logger->pushHandler($streamhandler);
     $this->logger_level = $level;
-    $this->logger->addDebug( "Setting log level to: " . $this->logger_level . "(".LOGGER::getLevelName($this->logger_level).")");
+    $this->logger->AddInfo("Setting log level to: " . $this->logger_level . "(".LOGGER::getLevelName($this->logger_level).")");
   }
 
   public function get_log_file() {
@@ -184,13 +184,18 @@ class Taleo {
     try {
       $response = $request->send();
       $output = $response->getBody(TRUE);
-      $this->logger->addDebug( "Request ".$method.": ".$request->getUrl());
-      $this->logger->addDebug( "Response: ". $output);
+      $this->logger->AddInfo("Request ".$method.": ".$request->getUrl());
+      $this->logger->AddDebug("Response: ". $output);
     } catch (Guzzle\Http\Exception\BadResponseException $e) {
       $output = json_decode($e->getResponse()->getBody(TRUE));
-      $this->logger->addError($output);
-      // TODO: Rework this.
-      die(print_r($output->status->detail->errormessage,1)."\n");
+      $this->logger->addAlert($output);
+      die();
+    }
+
+    if (!$response->getHeader('Content-Type')->hasValue('application/json;charset=UTF-8')) {
+      $this->logger->addAlert("The Content-Type header is wrong.");
+      $this->logger->addAlert($output);
+      die();
     }
 
     return $output;
@@ -206,11 +211,11 @@ class Taleo {
   }
 
   public function logout() {
-    $this->logger->addDebug("Logging out, deleting token: " . $this->token);
+    $this->logger->AddInfo("Logging out, deleting token: " . $this->token);
     $this->request('logout', 'POST');
     $name = sys_get_temp_dir().'/Taleo-';
     foreach (glob($name.'*') as $file) {
-      $this->logger->addDebug("Deleting token file: " . $file);
+      $this->logger->AddInfo("Deleting token file: " . $file);
       unlink($file);
     }
     unset($this->token);
