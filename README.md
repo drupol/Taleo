@@ -31,9 +31,8 @@ Examples
 
 ```php
 <?php
-
 require("./guzzle.phar");
-require('Taleo.php');
+require('./Taleo/Main/Taleo.php');
 
 $user = '******';
 $password = '******';
@@ -45,7 +44,6 @@ echo print_r($response,1)."\n";
 
 $response = $taleo->request('object/requisition/search', 'GET', array('status' => 'open', 'cws' => 1));
 echo print_r($response, 1)."\n";
-
 ?>
 ```
 
