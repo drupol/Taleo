@@ -23,8 +23,8 @@ Requirements
 
 Documentation
 =============
-You can find the whole Taleo REST API documentation here: http://cl.ly/011B34322v0t/download/TBE_REST_API_GUIDE_v12_4.pdf
-Issue with Will: https://github.com/shoxty/Taleo/issues/1
+ * Where it all began: https://github.com/shoxty/Taleo/issues/1
+ * Taleo REST API documentation: http://cl.ly/011B34322v0t/download/TBE_REST_API_GUIDE_v12_4.pdf
 
 Examples
 ========
