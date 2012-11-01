@@ -144,11 +144,11 @@ class Taleo {
   }
 
   public function logout() {
+    $this->request('logout', 'POST');
     $name = sys_get_temp_dir().'/Taleo-';
     foreach (glob($name.'*') as $file) {
       unlink($file);
     }
-    $this->request('logout', 'POST');
     unset($this->token);
   }
 
