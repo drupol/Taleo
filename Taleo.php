@@ -11,12 +11,11 @@ class Taleo {
 
   public $dispatcher_url = 'https://tbe.taleo.net/MANAGER/dispatcher/api/%1$s/serviceUrl/';
   public $taleo_api_version = 'v1';
-  static $instance;
-  private static $client;
+
+  private $host_url;
+  private $token;
 
   function __construct($username, $password, $company) {
-    self::$instance = &$this;
-
     $this->company = $company;
     $this->username = $username;
     $this->password = $password;
