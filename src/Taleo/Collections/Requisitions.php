@@ -1,6 +1,5 @@
 <?php
 namespace Taleo\Collections;
-require 'Collection.php';
 
 class Requisitions implements Collection {
 

@@ -1,7 +1,5 @@
 <?php
 namespace Taleo\Entities;
-require 'Entity.php';
-
 
 class Requisition implements Entity {
 
