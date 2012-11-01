@@ -9,7 +9,8 @@
 
 class Taleo {
 
-  public $dispatcher_url = "https://tbe.taleo.net/MANAGER/dispatcher/api/v1/serviceUrl/";
+  public $dispatcher_url = 'https://tbe.taleo.net/MANAGER/dispatcher/api/%1$s/serviceUrl/';
+  public $taleo_api_version = 'v1';
   static $instance;
   private static $client;
 
@@ -28,12 +29,15 @@ class Taleo {
   }
 
   public function connect() {
+    // The host url cannot be saved into a file, it can changes.
     $this->get_host_url();
+    // The token is saved into a temporary file because you only have
+    // a restricted amount of remote call per user per day.
     $this->get_token();
   }
 
   private function get_host_url() {
-    $url = $this->dispatcher_url.'/'.$this->company;
+    $url = sprintf($this->dispatcher_url, $this->taleo_api_version).'/'.$this->company;
     $request = $this->get_client($url);
     $response = $request->get()->send();
     $response = json_decode($response->getBody(true));
@@ -46,28 +50,42 @@ class Taleo {
   }
 
   private function get_token() {
-    $data = array(
-      "orgCode" => $this->company,
-      "userName" => $this->username,
-      "password" => $this->password
-    );
+    $name = sys_get_temp_dir().'/Taleo-';
+    $files = array();
 
-    $client = $this->get_client($this->endpoint('login'));
-    $request = $client->post($this->endpoint('login'),null,$data);
-    $response = json_decode($request->send()->getBody(true));
-
-    $request->addCookie('authToken', $response->response->authToken);
-
-    if($response->status->success == 1) {
-      $this->token = $response->response->authToken;
-    } else {
-      throw new Exception($response->status->detail->errormessage);
+    foreach (glob($name.'*') as $file) {
+      $timestamp = filemtime($file);
+      $files[$timestamp] = $file;
     }
-    echo "Token set to ".$this->token."\n";
+
+    krsort($files);
+    $file = array_shift($files);
+
+    if (!isset($file)) {
+      $data = array(
+        "orgCode" => $this->company,
+        "userName" => $this->username,
+        "password" => $this->password
+      );
+
+      $response = $this->request('login', 'POST', $data);
+      $response = json_decode($response);
+      if($response->status->success == 1) {
+        $file = tempnam(sys_get_temp_dir(), 'Taleo-');
+        file_put_contents($file, $response->response->authToken);
+      } else {
+       throw new Exception($response->status->detail->errormessage);
+      }
+
+    }
+
+    $this->token = file_get_contents($file);
+    echo "Token found: ".$this->token."\n";
 
   }
 
   function get_client($url) {
+    // Todo: Allow the user to set more option when initialisation
     return new Guzzle\Service\Client($url, array(
       'ssl.certificate_authority' => false,
     ));
@@ -89,12 +107,15 @@ class Taleo {
     }
 
     if ($method == 'POST') {
-      $data = array_merge($data, array('in0' => $this->token));
+      if (isset($this->token)) {
+        $data = array_merge($data, array('in0' => $this->token));
+      }
       $request = $client->post($url, null, $data);
     }
 
-    $request->addCookie('authToken', $this->token);
-    $request->addHeader('content-type', 'application/json');
+    if (isset($this->token)) {
+      $request->addCookie('authToken', $this->token);
+    }
     return $request->send()->getBody(true);
   }
 }
