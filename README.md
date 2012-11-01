@@ -77,6 +77,18 @@ $requisitions = new \Taleo\Collections\Requisitions($response);
 ?>
 ```
 
+TODOs:
+======
+ * Adding the missing objects et collections like:
+   * account
+   * candidate
+   * employee
+   * requisition (almost done)
+   * user
+ * Add a debug mode to log all the errors,
+ * Providing more examples,
+ * Fixing bugs.
+
 Thanks
 ======
  * Will Robertson (@shoxty)
