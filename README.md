@@ -88,6 +88,7 @@ TODOs:
  * Add a debug mode to log all the errors,
  * Providing more examples,
  * Remove all the 'require' and/or 'include' functions,
+ * Use composer: http://getcomposer.org/
  * Fixing bugs.
 
 Thanks
