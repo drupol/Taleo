@@ -47,7 +47,6 @@ $taleo->login();
 
 // Example of calls
 $response = $taleo->request('object/info');
-$response = $taleo->request('object/requisition/search', 'GET', array('status' => 'open', 'cws' => 1));
 $response = $taleo->request('object/requisition/1189');
 
 // Optional
@@ -59,8 +58,15 @@ $taleo->login();
 
 // Example of calls
 $response = $taleo->request('object/info');
-$response = $taleo->request('object/requisition/search', 'GET', array('status' => 'open', 'cws' => 1));
 $response = $taleo->request('object/requisition/1189');
+
+$response = $taleo->request(
+  'object/requisition/search',
+  'GET',
+  array('status' => 'open', 'cws' => 1)
+);
+// $requisitions will hold a json, this is the default format.
+$requisitions = new \Taleo\Collections\Requisitions($response);
 
 // If you call again your test file,
 // it will use the last valid token available.

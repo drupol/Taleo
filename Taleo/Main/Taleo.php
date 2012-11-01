@@ -128,7 +128,7 @@ class Taleo {
     } catch (Guzzle\Http\Exception\BadResponseException $e) {
       $output = json_decode($e->getResponse()->getBody(true));
       // TODO: Rework this.
-      die($output->status->detail->errormessage."\n");
+      die(print_r($output->status->detail->errormessage,1)."\n");
     }
 
     return $output;
