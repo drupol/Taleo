@@ -7,6 +7,9 @@
  * @author Pol Dell'Aiera
  */
 
+namespace Taleo\Main;
+use Guzzle\Service\Client;
+
 class Taleo {
 
   public $dispatcher_url = 'https://tbe.taleo.net/MANAGER/dispatcher/api/%1$s/serviceUrl/';
@@ -85,7 +88,7 @@ class Taleo {
 
   function get_client($url) {
     // Todo: Allow the user to set more option when initialisation
-    return new Guzzle\Service\Client($url, array(
+    return new Client($url, array(
       'ssl.certificate_authority' => false,
     ));
   }
@@ -117,4 +120,15 @@ class Taleo {
     }
     return $request->send()->getBody(true);
   }
+
+  // Aliases
+  public function get($url, $data) {
+    return $this->request($url, 'GET', $data);
+  }
+
+  public function post($url, $data) {
+    return $this->request($url, 'POST', $data);
+  }
+
+
 }
