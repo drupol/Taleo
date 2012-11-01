@@ -38,12 +38,32 @@ $user = '******';
 $password = '******';
 $company = '******';
 
+// When call the library with the valid parameters,
+// a new token will be generated.
 $taleo = new Taleo($user, $password, $company);
-$response = $taleo->request('object/info');
-echo print_r($response,1)."\n";
 
+// Optional
+$taleo->login();
+
+// Example of calls
+$response = $taleo->request('object/info');
 $response = $taleo->request('object/requisition/search', 'GET', array('status' => 'open', 'cws' => 1));
-echo print_r($response, 1)."\n";
+$response = $taleo->request('object/requisition/1189');
+
+// Optional
+// We clear the token
+$taleo->logout();
+
+// A new token is generated.
+$taleo->login();
+
+// Example of calls
+$response = $taleo->request('object/info');
+$response = $taleo->request('object/requisition/search', 'GET', array('status' => 'open', 'cws' => 1));
+$response = $taleo->request('object/requisition/1189');
+
+// If you call again your test file,
+// it will use the last valid token available.
 ?>
 ```
 

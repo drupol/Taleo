@@ -8,7 +8,7 @@
  */
 
 namespace Taleo\Main;
-use Guzzle\Service\Client;
+use Guzzle;
 
 class Taleo {
 
@@ -18,52 +18,65 @@ class Taleo {
   private $host_url;
   private $token;
 
-  function __construct($username, $password, $company) {
+  function __construct($username, $password, $company, $token = null) {
     $this->company = $company;
     $this->username = $username;
     $this->password = $password;
 
-    $this->connect();
+    $this->login($token);
   }
 
-  public function endpoint($name) {
+  private function endpoint($name) {
     return $this->host_url . $name;
   }
 
-  public function connect() {
+  public function login($token = null) {
     // The host url cannot be saved into a file, it can changes.
     $this->get_host_url();
+
     // The token is saved into a temporary file because you only have
     // a restricted amount of remote call per user per day.
-    $this->get_token();
+    if (!is_null($token)) {
+      $this->token = $token;
+    } else {
+      $this->token = $this->get_token();
+    }
+
+    echo "\n"."Token: " . $this->token."\n";
+
   }
 
   private function get_host_url() {
     $url = sprintf($this->dispatcher_url, $this->taleo_api_version).'/'.$this->company;
-    $request = $this->get_client($url);
-    $response = $request->get()->send();
-    $response = json_decode($response->getBody(true));
-
-    if($response->status->success == 1) {
-      $this->host_url = $response->response->URL;
-    } else {
-      throw new Exception($response->status->detail->errormessage);
-    }
+    $request = $this->request($url);
+    $response = json_decode($request);
+    $this->host_url = $response->response->URL;
   }
 
   private function get_token() {
     $name = sys_get_temp_dir().'/Taleo-';
-    $files = array();
+    $data = array();
 
     foreach (glob($name.'*') as $file) {
       $timestamp = filemtime($file);
-      $files[$timestamp] = $file;
+      $data[$timestamp] = $file;
     }
 
-    krsort($files);
-    $file = array_shift($files);
+    krsort($data);
+    $files = array_values($data);
+    $timestamps = array_keys($data);
 
-    if (!isset($file)) {
+    $file = isset($files[0]) ? $files[0]:null;
+    $timestamp = isset($timestamps[0]) ? $timestamps[0]:null;
+
+    // According to the REST API Doc:
+    // Token is valid only for 4 hours.
+    if (!isset($file) OR (time() - (int)$timestamp - 4*60*60 > 0)) {
+      $name = sys_get_temp_dir().'/Taleo-';
+      foreach (glob($name.'*') as $file) {
+        unlink($file);
+      }
+
       $data = array(
         "orgCode" => $this->company,
         "userName" => $this->username,
@@ -72,23 +85,16 @@ class Taleo {
 
       $response = $this->request('login', 'POST', $data);
       $response = json_decode($response);
-      if($response->status->success == 1) {
-        $file = tempnam(sys_get_temp_dir(), 'Taleo-');
-        file_put_contents($file, $response->response->authToken);
-      } else {
-       throw new Exception($response->status->detail->errormessage);
-      }
-
+      $file = tempnam(sys_get_temp_dir(), 'Taleo-');
+      file_put_contents($file, $response->response->authToken);
     }
 
-    $this->token = file_get_contents($file);
-    echo "Token found: ".$this->token."\n";
-
+    return file_get_contents($file);
   }
 
-  function get_client($url) {
+  private function get_client($url) {
     // Todo: Allow the user to set more option when initialisation
-    return new Client($url, array(
+    return new Guzzle\Service\Client($url, array(
       'ssl.certificate_authority' => false,
     ));
   }
@@ -118,7 +124,17 @@ class Taleo {
     if (isset($this->token)) {
       $request->addCookie('authToken', $this->token);
     }
-    return $request->send()->getBody(true);
+
+    try {
+      $response = $request->send();
+      $output = $response->getBody(true);
+    } catch (Guzzle\Http\Exception\BadResponseException $e) {
+      $output = json_decode($e->getResponse()->getBody(true));
+      // TODO: Rework this.
+      die("\n".$output->status->detail->errormessage."\n");
+    }
+
+    return $output;
   }
 
   // Aliases
@@ -130,5 +146,13 @@ class Taleo {
     return $this->request($url, 'POST', $data);
   }
 
+  public function logout() {
+    $name = sys_get_temp_dir().'/Taleo-';
+    foreach (glob($name.'*') as $file) {
+      unlink($file);
+    }
+    $this->request('logout', 'POST');
+    unset($this->token);
+  }
 
 }
