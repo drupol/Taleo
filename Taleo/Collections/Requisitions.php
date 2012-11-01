@@ -11,11 +11,11 @@ class Requisitions {
     $results = $data->response->searchResults;
 
     foreach ($results as $data) {
-      $this->add(new \Taleo\Objects\Requisition($data->requisition));
+      $this->add(new \Taleo\Entities\Requisition($data->requisition));
     }
   }
 
-  function add(\Taleo\Objects\Requisition $requisition) {
+  function add(\Taleo\Entities\Requisition $requisition) {
     $this->requisitions[] = $requisition->to_array();
   }
 

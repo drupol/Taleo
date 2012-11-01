@@ -1,8 +1,8 @@
 <?php
 
-namespace Taleo\Objects;
+namespace Taleo\Entities;
 
-class Requisition {
+class Requisition implements \Entity {
 
   private $requisition;
 
