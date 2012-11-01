@@ -19,7 +19,8 @@ This library allows you to connect to Taleo and request data.
 Requirements
 ============
  * PHP >= 5.3.x
- * Guzzle, an HTTP client for PHP: http://guzzlephp.org/
+ * Guzzle, an HTTP client: http://guzzlephp.org/
+ * Monolog, a logger: https://github.com/Seldaek/monolog
 
 Installation
 ============
@@ -38,7 +39,6 @@ Examples
 ```php
 <?php
 include_once './vendor/autoload.php';
-
 use \Taleo\Main\Taleo as Taleo;
 
 $user = '******';
@@ -48,6 +48,14 @@ $company = '******';
 // When call the library with the valid parameters,
 // a new token will be generated.
 $taleo = new Taleo($user, $password, $company);
+
+// See the Monolog documentation to check which levels are available.
+// By default, Taleo PHP Library doesn't log anything (log level set to ALERT).
+// If you change this to DEBUG, it will log almost everything.
+// By default, the logfile is in the default PHP temporary directory,
+// Under the name of "Taleo.log"
+// Do not forget to disable the DEBUG level when in Production !
+$taleo->loglevel(\Monolog\Logger::DEBUG);
 
 // Optional
 $taleo->login();
@@ -88,9 +96,7 @@ TODOs:
    * employee
    * requisition (almost done)
    * user
- * Add a debug mode to log all the errors,
  * Providing more examples,
- * Remove all the 'require' and/or 'include' functions,
  * Fixing bugs.
 
 Thanks

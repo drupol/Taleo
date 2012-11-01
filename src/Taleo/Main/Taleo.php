@@ -9,20 +9,30 @@
 
 namespace Taleo\Main;
 use Guzzle;
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
 
 class Taleo {
 
-  public $dispatcher_url = 'https://tbe.taleo.net/MANAGER/dispatcher/api/%1$s/serviceUrl/';
+  public $dispatcher_url = 'https://tbe.taleo.net/MANAGER/dispatcher/api/%1$s/serviceUrl';
   public $taleo_api_version = 'v1';
 
   private $host_url;
   private $token;
+  private $logger;
+  private $logger_level;
 
-  function __construct($username, $password, $company, $token = null) {
+  function __construct($username, $password, $company, $token = NULL) {
     $this->company = $company;
     $this->username = $username;
     $this->password = $password;
 
+    // By default, the logger log only ALERT;
+    // It can be changed by a call to the method loglevel($level) and
+    // $level should be an integer, see the Monolog documentation.
+    $this->loglevel(Logger::ALERT);
+
+    // Do the login.
     $this->login($token);
   }
 
@@ -30,7 +40,7 @@ class Taleo {
     return $this->host_url . $name;
   }
 
-  public function login($token = null) {
+  public function login($token = NULL) {
     // The host url cannot be saved into a file, it can changes.
     $this->get_host_url();
 
@@ -41,6 +51,8 @@ class Taleo {
     } else {
       $this->token = $this->get_token();
     }
+
+    $this->logger->addDebug("Login in, token set to : " . $this->token);
   }
 
   private function get_host_url() {
@@ -48,6 +60,9 @@ class Taleo {
     $request = $this->request($url);
     $response = json_decode($request);
     $this->host_url = $response->response->URL;
+
+    $this->logger->addDebug("Using Taleo API Version: " . $this->taleo_api_version);
+    $this->logger->addDebug("Host url set to : " . $this->host_url);
   }
 
   private function get_token() {
@@ -63,8 +78,8 @@ class Taleo {
     $files = array_values($data);
     $timestamps = array_keys($data);
 
-    $file = isset($files[0]) ? $files[0]:null;
-    $timestamp = isset($timestamps[0]) ? $timestamps[0]:null;
+    $file = isset($files[0]) ? $files[0]:NULL;
+    $timestamp = isset($timestamps[0]) ? $timestamps[0]:NULL;
 
     // According to the REST API Doc:
     // Token is valid only for 4 hours.
@@ -84,21 +99,65 @@ class Taleo {
       $response = json_decode($response);
       $file = tempnam(sys_get_temp_dir(), 'Taleo-');
       file_put_contents($file, $response->response->authToken);
+      $this->logger->addDebug("Token file is too old or inexistant.");
     }
 
+    $this->logger->addDebug("Temporary token file: " . $file);
     return file_get_contents($file);
   }
 
   private function get_client($url) {
     // Todo: Allow the user to set more option when initialisation
     return new Guzzle\Service\Client($url, array(
-      'ssl.certificate_authority' => false,
+      'ssl.certificate_authority' => FALSE,
     ));
+  }
+
+  /**
+   * Set logger level.
+   *  DEBUG => 100
+   *  INFO => 200
+   *  WARNING => 300
+   *  ERROR => 400
+   *  CRITICAL => 500
+   *  ALERT => 550
+   *
+   * @param $level
+   */
+  public function loglevel($level) {
+    $levels = array(
+      LOGGER::DEBUG,
+      LOGGER::INFO,
+      LOGGER::WARNING,
+      LOGGER::ERROR,
+      LOGGER::CRITICAL,
+      LOGGER::ALERT
+    );
+
+    if (!in_array($level, $levels)) {
+      $level = Logger::ALERT;
+    }
+
+    $streamhandler = new StreamHandler($this->get_log_file(), $level);
+
+    if (isset($this->logger_level)) {
+      $this->logger->popHandler();
+    } else {
+      $this->logger = new Logger('Taleo');
+    }
+
+    $this->logger->pushHandler($streamhandler);
+    $this->logger_level = $level;
+    $this->logger->addDebug( "Setting log level to: " . $this->logger_level . "(".LOGGER::getLevelName($this->logger_level).")");
+  }
+
+  public function get_log_file() {
+    return sys_get_temp_dir().'/Taleo.log';
   }
 
   public function request($url, $method = 'GET', $data = array()) {
 
-    if(strpos($url, "https://") === false) {
+    if(strpos($url, "https://") === FALSE) {
       $url = $this->endpoint($url);
     }
 
@@ -115,7 +174,7 @@ class Taleo {
       if (isset($this->token)) {
         $data = array_merge($data, array('in0' => $this->token));
       }
-      $request = $client->post($url, null, $data);
+      $request = $client->post($url, NULL, $data);
     }
 
     if (isset($this->token)) {
@@ -124,9 +183,12 @@ class Taleo {
 
     try {
       $response = $request->send();
-      $output = $response->getBody(true);
+      $output = $response->getBody(TRUE);
+      $this->logger->addDebug( "Request ".$method.": ".$request->getUrl());
+      $this->logger->addDebug( "Response: ". $output);
     } catch (Guzzle\Http\Exception\BadResponseException $e) {
-      $output = json_decode($e->getResponse()->getBody(true));
+      $output = json_decode($e->getResponse()->getBody(TRUE));
+      $this->logger->addError($output);
       // TODO: Rework this.
       die(print_r($output->status->detail->errormessage,1)."\n");
     }
@@ -144,9 +206,11 @@ class Taleo {
   }
 
   public function logout() {
+    $this->logger->addDebug("Logging out, deleting token: " . $this->token);
     $this->request('logout', 'POST');
     $name = sys_get_temp_dir().'/Taleo-';
     foreach (glob($name.'*') as $file) {
+      $this->logger->addDebug("Deleting token file: " . $file);
       unlink($file);
     }
     unset($this->token);
