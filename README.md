@@ -29,7 +29,7 @@ Issue with Will: https://github.com/shoxty/Taleo/issues/1
 Examples
 ========
 
-```
+```php
 <?php
 
 require("./guzzle.phar");
