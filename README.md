@@ -1,5 +1,5 @@
-Taleo
-=====
+Taleo PHP Library
+=================
 
 What is Taleo (from Wikipedia) ?
 ================================
@@ -21,6 +21,12 @@ Requirements
  * PHP >= 5.3.x
  * Guzzle, an HTTP client for PHP: http://guzzlephp.org/
 
+Installation
+============
+Taleo PHP Library is using composer (http://getcomposer.org/) to manage it's dependency.
+To get started, install composer, then run the command: "composer install".
+It will download the required library automatically and you'll be able to use Taleo PHP Library directly.
+
 Documentation
 =============
  * Where it all began: https://github.com/shoxty/Taleo/issues/1
@@ -31,10 +37,7 @@ Examples
 
 ```php
 <?php
-require("./guzzle.phar");
-require('./Taleo/Collections/Requisitions.php');
-require('./Taleo/Entities/Requisition.php');
-require('./Taleo/Main/Taleo.php');
+include_once './vendor/autoload.php';
 
 use \Taleo\Main\Taleo as Taleo;
 
@@ -64,9 +67,9 @@ $taleo->login();
 $response = $taleo->request('object/info');
 $response = $taleo->request('object/requisition/1189');
 
-$response = $taleo->request(
+// $taleo->get() is an alias of $taleo->request().
+$response = $taleo->get(
   'object/requisition/search',
-  'GET',
   array('status' => 'open', 'cws' => 1)
 );
 // $requisitions will hold a json, this is the default format.
@@ -88,7 +91,6 @@ TODOs:
  * Add a debug mode to log all the errors,
  * Providing more examples,
  * Remove all the 'require' and/or 'include' functions,
- * Use composer: http://getcomposer.org/
  * Fixing bugs.
 
 Thanks
