@@ -1,4 +1,5 @@
 <?php
+namespace Taleo\Collections;
 
 interface Collection {
 

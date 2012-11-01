@@ -1,8 +1,8 @@
 <?php
-
 namespace Taleo\Collections;
+require 'Collection.php';
 
-class Requisitions {
+class Requisitions implements Collection {
 
   private $requisitions = array();
 
@@ -15,11 +15,11 @@ class Requisitions {
     }
   }
 
-  function add(\Taleo\Entities\Requisition $requisition) {
+  public function add($requisition) {
     $this->requisitions[] = $requisition->to_array();
   }
 
-  function __toString() {
+  public function __toString() {
     return json_encode($this->requisitions);
   }
 

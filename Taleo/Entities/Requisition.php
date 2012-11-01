@@ -1,8 +1,9 @@
 <?php
-
 namespace Taleo\Entities;
+require 'Entity.php';
 
-class Requisition implements \Entity {
+
+class Requisition implements Entity {
 
   private $requisition;
 
@@ -10,18 +11,18 @@ class Requisition implements \Entity {
     $this->requisition = $data;
   }
 
-  function get($key = null) {
+  public function get($key = null) {
     if (!is_null($key)) {
       return $this->requisition->$key;
     }
     return $this->requisition;
   }
 
-  function to_array() {
+  public function to_array() {
     return (array)$this->requisition;
   }
 
-  function to_json() {
+  public function to_json() {
     return json_encode($this->requisition);
   }
 

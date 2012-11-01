@@ -1,4 +1,5 @@
 <?php
+namespace Taleo\Entities;
 
 interface Entity {
 

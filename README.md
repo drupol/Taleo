@@ -33,7 +33,7 @@ Examples
 <?php
 require("./guzzle.phar");
 require('./Taleo/Collections/Requisitions.php');
-require('./Taleo/Objects/Requisition.php');
+require('./Taleo/Entities/Requisition.php');
 require('./Taleo/Main/Taleo.php');
 
 use \Taleo\Main\Taleo as Taleo;
@@ -87,6 +87,7 @@ TODOs:
    * user
  * Add a debug mode to log all the errors,
  * Providing more examples,
+ * Remove all the 'require' and/or 'include' functions,
  * Fixing bugs.
 
 Thanks
