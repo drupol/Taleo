@@ -41,9 +41,6 @@ class Taleo {
     } else {
       $this->token = $this->get_token();
     }
-
-    echo "\n"."Token: " . $this->token."\n";
-
   }
 
   private function get_host_url() {
