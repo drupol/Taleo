@@ -4,8 +4,8 @@ Taleo
 What is Taleo (from Wikipedia) ?
 ================================
 Taleo Corporation was a publicly traded provider of cloud-based talent management solutions headquartered in Dublin, California.
-Taleo’s solutions are primarily centered around talent acquisition (recruitment), performance management, learning and development, and compensation management.
-These capabilities combine to provide what Taleo calls “Talent Intelligence,” or an enhanced level of insight into candidates and employees.
+Taleo's solutions are primarily centered around talent acquisition (recruitment), performance management, learning and development, and compensation management.
+These capabilities combine to provide what Taleo calls "Talent Intelligence" or an enhanced level of insight into candidates and employees.
 Taleo sells its products entirely via a software-as-a-service (SaaS) model, in which all software and information resides in data centers operated and secured by Taleo.
 As of August 2011, Taleo reported it had more than 5,000 customers ranging from small and medium-sized businesses to large global enterprises, including nearly half of the Fortune 100.
 On February 9, 2012, Oracle Corporation entered into an agreement to acquire Taleo Corporation.
