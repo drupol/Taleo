@@ -99,7 +99,7 @@ class Taleo {
       $response = json_decode($response);
       $file = tempnam(sys_get_temp_dir(), 'Taleo-');
       file_put_contents($file, $response->response->authToken);
-      $this->logger->AddInfo("Token file is too old or inexistant.");
+      $this->logger->AddInfo("Token file is too old or unavailable.");
     }
 
     $this->logger->AddInfo("Temporary token file: " . $file);
@@ -181,13 +181,12 @@ class Taleo {
       $request->addCookie('authToken', $this->token);
     }
 
+    $this->logger->AddInfo("Request ".$method.": ".$request->getUrl());
     try {
       $response = $request->send();
       $output = $response->getBody(TRUE);
-      $this->logger->AddInfo("Request ".$method.": ".$request->getUrl());
       $this->logger->AddDebug("Response: ". $output);
     } catch (Guzzle\Http\Exception\BadResponseException $e) {
-      $this->logger->AddInfo("Request ".$method.": ".$request->getUrl());
       $output = $e->getResponse()->getBody(TRUE);
       $this->logger->AddDebug("Response: ". $output);
       $output = json_decode($output);
@@ -218,7 +217,7 @@ class Taleo {
     $this->request('logout', 'POST');
     $name = sys_get_temp_dir().'/Taleo-';
     foreach (glob($name.'*') as $file) {
-      $this->logger->AddInfo("Deleting token file: " . $file);
+      $this->logger->AddDebug("Deleting token file: " . $file);
       unlink($file);
     }
     unset($this->token);
