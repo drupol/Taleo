@@ -58,31 +58,45 @@ $taleo = new Taleo($user, $password, $company);
 // Do not forget to disable the DEBUG level when in Production !
 $taleo->loglevel(\Monolog\Logger::DEBUG);
 
-// Optional
+// Optional if no logout().
 $taleo->login();
-
-// Example of calls
-$response = $taleo->request('object/info');
-$response = $taleo->request('object/requisition/1189');
 
 // Optional
 // We clear the token
 $taleo->logout();
 
 // A new token is generated.
+// Mandatory if a logout() is made.
 $taleo->login();
 
 // Example of calls
-$response = $taleo->request('object/info');
-$response = $taleo->request('object/requisition/1189');
+// The default return format is JSON.
 
-// $taleo->get() is an alias of $taleo->request().
 $response = $taleo->get(
   'object/requisition/search',
   array('status' => 'open', 'cws' => 1)
 );
-// $requisitions will hold a json, this is the default format.
-$requisitions = new \Taleo\Collections\Requisitions($response);
+$requisitions = new \Taleo\Collections\Collection($response);
+
+$response = $taleo->get(
+  'object/account/search'
+);
+$account = new \Taleo\Collections\Collection($response);
+
+$response = $taleo->get(
+  'object/candidate/search'
+);
+$candidate = new \Taleo\Collections\Collection($response);
+
+$response = $taleo->get(
+  'object/employee/search'
+);
+$employee = new \Taleo\Collections\Collection($response);
+
+$response = $taleo->get(
+  'object/user/search'
+);
+$user = new \Taleo\Collections\Collection($response);
 
 // If you call again your test file,
 // it will use the last valid token available.
@@ -91,12 +105,6 @@ $requisitions = new \Taleo\Collections\Requisitions($response);
 
 TODOs:
 ======
- * Adding the missing objects et collections like:
-   * account
-   * candidate
-   * employee
-   * requisition (almost done)
-   * user
  * Providing more examples,
  * Fixing bugs.
 

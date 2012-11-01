@@ -187,8 +187,11 @@ class Taleo {
       $this->logger->AddInfo("Request ".$method.": ".$request->getUrl());
       $this->logger->AddDebug("Response: ". $output);
     } catch (Guzzle\Http\Exception\BadResponseException $e) {
-      $output = json_decode($e->getResponse()->getBody(TRUE));
-      $this->logger->addAlert($output);
+      $this->logger->AddInfo("Request ".$method.": ".$request->getUrl());
+      $output = $e->getResponse()->getBody(TRUE);
+      $this->logger->AddDebug("Response: ". $output);
+      $output = json_decode($output);
+      $this->logger->addAlert($output->status->detail->errorcode .": ".$output->status->detail->errormessage);
       die();
     }
 
