@@ -128,18 +128,18 @@ class Taleo {
     } catch (Guzzle\Http\Exception\BadResponseException $e) {
       $output = json_decode($e->getResponse()->getBody(true));
       // TODO: Rework this.
-      die("\n".$output->status->detail->errormessage."\n");
+      die($output->status->detail->errormessage."\n");
     }
 
     return $output;
   }
 
   // Aliases
-  public function get($url, $data) {
+  public function get($url, $data = array()) {
     return $this->request($url, 'GET', $data);
   }
 
-  public function post($url, $data) {
+  public function post($url, $data = array()) {
     return $this->request($url, 'POST', $data);
   }
 
