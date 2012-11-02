@@ -20,6 +20,7 @@ before_script:
 #    - phpenv rehash
   - curl -s http://getcomposer.org/installer | php
   - php composer.phar install
+  - cp phpunit.xml.dist phpunit.xml
 
 script:
  - phpcs --standard=ruleset.phpcs.xml --encoding=UTF-8 --report=summary --ignore=*/vendor/* -p .
