@@ -21,4 +21,6 @@ before_script:
   - curl -s http://getcomposer.org/installer | php
   - php composer.phar install
 
-script: phpcs --standard=ruleset.phpcs.xml --encoding=UTF-8 --report=summary --ignore=*/vendor/* -p .
+script:
+ - phpcs --standard=ruleset.phpcs.xml --encoding=UTF-8 --report=summary --ignore=*/vendor/* -p .
+ - phpunit -c phpunit.xml

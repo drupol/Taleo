@@ -1,18 +1,31 @@
 <?php
 namespace Taleo;
 
-class TaleoTest extends \PHPUnit_Framework_TestCase {
+// Testing with a config.inc.php file.
+class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
 
   public function setUp() {
+    $this->config = new \stdClass();
     $user = $password = $company = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz1234567890'), 0, 6);
     if (!file_exists('config.inc.php')) {
-      $this->fail("Please create a config file 'config.inc.php' at the root of the project with \$user, \$password and \$company variables.\n");
+      $this->markTestSkipped(
+        'Skipping those tests.'
+      );
+    } else {
+      include 'config.inc.php';
     }
-    include 'config.inc.php';
-    $this->config = new \stdClass();
     $this->config->user = $user;
     $this->config->password = $password;
     $this->config->company = $company;
+
+    $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
+    $token = $taleo->login();
+    if (empty($token)) {
+      $this->markTestSkipped(
+        'Bad credentials.'
+      );
+    }
+    $taleo->logout();
   }
 
   /**
@@ -76,6 +89,4 @@ class TaleoTest extends \PHPUnit_Framework_TestCase {
 
     $this->assertNotEmpty($response->response->URL);
   }
-
-
 }

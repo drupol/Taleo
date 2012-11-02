@@ -11,6 +11,7 @@ namespace Taleo\Main;
 use Guzzle;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
+use Taleo\Exceptions\TaleoException;
 
 class Taleo {
 
@@ -30,7 +31,7 @@ class Taleo {
     // By default, the logger log only ALERT;
     // It can be changed by a call to the method loglevel($level) and
     // $level should be an integer, see the Monolog documentation.
-    $this->loglevel(Logger::ALERT);
+    $this->loglevel(Logger::DEBUG);
 
     // Do the login.
     $this->login($token);
@@ -58,12 +59,12 @@ class Taleo {
 
   private function get_host_url() {
     $url = sprintf($this->dispatcher_url, $this->taleo_api_version).'/'.$this->company;
-    $request = $this->request($url);
-    $response = json_decode($request);
-    $this->host_url = $response->response->URL;
-
-    $this->logger->AddInfo("Using Taleo API Version: " . $this->taleo_api_version);
-    $this->logger->AddInfo("Host url set to : " . $this->host_url);
+    if ($request = $this->request($url)) {
+      $response = json_decode($request);
+      $this->host_url = $response->response->URL;
+      $this->logger->AddInfo("Using Taleo API Version: " . $this->taleo_api_version);
+      $this->logger->AddInfo("Host url set to : " . $this->host_url);
+    }
   }
 
   private function get_token() {
@@ -96,15 +97,16 @@ class Taleo {
         "password" => $this->password
       );
 
-      $response = $this->request('login', 'POST', $data);
-      $response = json_decode($response);
-      $file = tempnam(sys_get_temp_dir(), 'Taleo-');
-      file_put_contents($file, $response->response->authToken);
-      $this->logger->AddInfo("Token file is too old or unavailable.");
+      if ($response = $this->post('login', $data)) {
+        $response = json_decode($response);
+        $file = tempnam(sys_get_temp_dir(), 'Taleo-');
+        file_put_contents($file, $response->response->authToken);
+        $this->logger->AddInfo("Token file is too old or unavailable.");
+      }
     }
 
     $this->logger->AddInfo("Temporary token file: " . $file);
-    return file_get_contents($file);
+    return file_exists($file) ? file_get_contents($file) : FALSE;
   }
 
   private function get_client($url) {
@@ -183,22 +185,23 @@ class Taleo {
     }
 
     $this->logger->AddInfo("Request ".$method.": ".$request->getUrl());
+
     try {
       $response = $request->send();
       $output = $response->getBody(TRUE);
       $this->logger->AddDebug("Response: ". $output);
     } catch (Guzzle\Http\Exception\BadResponseException $e) {
-      $output = $e->getResponse()->getBody(TRUE);
-      $this->logger->AddDebug("Response: ". $output);
-      $output = json_decode($output);
-      $this->logger->addAlert($output->status->detail->errorcode .": ".$output->status->detail->errormessage);
-      die();
+      return FALSE;
+    }
+
+    if (!is_object($request)) {
+      return FALSE;
     }
 
     if (!$response->getHeader('Content-Type')->hasValue('application/json;charset=UTF-8')) {
       $this->logger->addAlert("The Content-Type header is wrong.");
       $this->logger->addAlert($output);
-      die();
+      return FALSE;
     }
 
     return $output;

@@ -6,6 +6,9 @@ class Collection {
   private $objects = array();
 
   public function __construct($response = NULL) {
+    if ($response === FALSE) {
+      // TODO: When $response is false.
+    }
     $data = json_decode($response);
     $results = $data->response->searchResults;
 
