@@ -53,6 +53,7 @@ class Taleo {
     }
 
     $this->logger->AddInfo("Login in, token set to : " . $this->token);
+    return $this->token;
   }
 
   private function get_host_url() {

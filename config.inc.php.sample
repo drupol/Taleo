@@ -1,0 +1,8 @@
+<?php
+// Rename this file in config.inc.php
+
+$user = 'XXXXXX';
+$password = 'XXXXXX';
+$company = 'XXXXXX';
+
+?>
