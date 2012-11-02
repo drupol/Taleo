@@ -4,11 +4,11 @@ namespace Taleo;
 class TaleoTest extends \PHPUnit_Framework_TestCase {
 
   public function setUp() {
-    $user = $password = $company = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz1234567890'),0,6);
+    $user = $password = $company = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz1234567890'), 0, 6);
     if (!file_exists('config.inc.php')) {
       $this->fail("Please create a config file 'config.inc.php' at the root of the project with \$user, \$password and \$company variables.\n");
     }
-    include('config.inc.php');
+    include 'config.inc.php';
     $this->config = new \stdClass();
     $this->config->user = $user;
     $this->config->password = $password;

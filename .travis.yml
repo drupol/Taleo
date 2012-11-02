@@ -18,8 +18,7 @@ before_script:
 #    - pyrus channel-discover pear.phpunit.de
 #    - pyrus install phpunit/phpcpd
 #    - phpenv rehash
-
   - curl -s http://getcomposer.org/installer | php
-  - php composer.phar install --dev
+  - php composer.phar install
 
-script: phpcs --standard=ruleset.phpcs.xml --encoding=UTF-8 --report=summary --ignore=*/tests/* --ignore=*/vendor/* -np .
+script: phpcs --standard=ruleset.phpcs.xml --encoding=UTF-8 --report=summary --ignore=*/vendor/* -p .
