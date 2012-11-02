@@ -1,0 +1,14 @@
+language: php
+
+php:
+  - 5.3
+  - 5.4
+
+before_script:
+  - pyrus install http://phptal.org/latest.tar.gz
+  - pear install pear/PHP_CodeSniffer
+  - phpenv rehash
+  - curl -s http://getcomposer.org/installer | php
+  - php composer.phar install --dev
+
+script: phpcs --standard=ruleset.phpcs.xml --report=summary --ignore=*/tests/* --ignore=*/vendor/* -np .
