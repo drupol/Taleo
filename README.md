@@ -1,6 +1,8 @@
 Taleo PHP Library
 =================
 
+[![Build Status](https://secure.travis-ci.org/Polzme/Taleo.png)](http://travis-ci.org/Polzme/Taleo)
+
 What is Taleo (from Wikipedia) ?
 ================================
 Taleo Corporation was a publicly traded provider of cloud-based talent management solutions headquartered in Dublin, California.
