@@ -22,7 +22,7 @@ class Taleo {
   private $logger;
   private $logger_level;
 
-  function __construct($username, $password, $company, $token = NULL) {
+  public function __construct($username, $password, $company, $token = NULL) {
     $this->company = $company;
     $this->username = $username;
     $this->password = $password;
@@ -84,7 +84,7 @@ class Taleo {
 
     // According to the REST API Doc:
     // Token is valid only for 4 hours.
-    if (!isset($file) OR (time() - (int)$timestamp - 4*60*60 > 0)) {
+    if (!isset($file) OR (time() - (int) $timestamp - 4 * 60 * 60 > 0)) {
       $name = sys_get_temp_dir().'/Taleo-';
       foreach (glob($name.'*') as $file) {
         unlink($file);

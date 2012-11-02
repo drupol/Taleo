@@ -1,11 +1,11 @@
 <?php
-include_once './vendor/autoload.php';
+include './vendor/autoload.php';
 use \Taleo\Main\Taleo as Taleo;
 
 if (!file_exists('config.inc.php')) {
   die("Please create a config file 'config.inc.php' at the root of the project with \$user, \$password and \$company variables.\n");
 }
-include('config.inc.php');
+include 'config.inc.php';
 
 $taleo = new Taleo($user, $password, $company);
 $taleo->loglevel(\Monolog\Logger::DEBUG);

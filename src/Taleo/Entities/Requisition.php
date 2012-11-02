@@ -5,11 +5,11 @@ class Requisition implements Entity {
 
   private $requisition;
 
-  function __construct($data) {
+  public function __construct($data) {
     $this->requisition = $data;
   }
 
-  public function get($key = null) {
+  public function get($key = NULL) {
     if (!is_null($key)) {
       return $this->requisition->$key;
     }
@@ -17,7 +17,7 @@ class Requisition implements Entity {
   }
 
   public function to_array() {
-    return (array)$this->requisition;
+    return (array) $this->requisition;
   }
 
   public function to_json() {

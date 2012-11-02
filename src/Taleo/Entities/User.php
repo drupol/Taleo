@@ -5,11 +5,11 @@ class User implements Entity {
 
   private $user;
 
-  function __construct($data) {
+  public function __construct($data) {
     $this->user = $data;
   }
 
-  public function get($key = null) {
+  public function get($key = NULL) {
     if (!is_null($key)) {
       return $this->user->$key;
     }

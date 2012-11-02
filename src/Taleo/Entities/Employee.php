@@ -5,11 +5,11 @@ class Employee implements Entity {
 
   private $employee;
 
-  function __construct($data) {
+  public function __construct($data) {
     $this->employee = $data;
   }
 
-  public function get($key = null) {
+  public function get($key = NULL) {
     if (!is_null($key)) {
       return $this->employee->$key;
     }

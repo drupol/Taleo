@@ -8,7 +8,18 @@ before_script:
   - pyrus install http://phptal.org/latest.tar.gz
   - pear install pear/PHP_CodeSniffer
   - phpenv rehash
+#    - pyrus channel-discover pear.pdepend.org
+#    - pyrus install pdepend/PHP_Depend
+#    - phpenv rehash
+#    - pyrus channel-discover pear.phpmd.org
+#    - pyrus install --alldeps phpmd/PHP_PMD
+#    - phpenv rehash
+#    - pyrus channel-discover components.ez.no
+#    - pyrus channel-discover pear.phpunit.de
+#    - pyrus install phpunit/phpcpd
+#    - phpenv rehash
+
   - curl -s http://getcomposer.org/installer | php
   - php composer.phar install --dev
 
-script: phpcs --standard=ruleset.phpcs.xml --report=summary --ignore=*/tests/* --ignore=*/vendor/* -np .
+script: phpcs --standard=ruleset.phpcs.xml --encoding=UTF-8 --report=summary --ignore=*/tests/* --ignore=*/vendor/* -np .

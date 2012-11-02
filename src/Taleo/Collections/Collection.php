@@ -5,7 +5,7 @@ class Collection {
 
   private $objects = array();
 
-  function __construct($response = null) {
+  public function __construct($response = NULL) {
     $data = json_decode($response);
     $results = $data->response->searchResults;
 
