@@ -125,7 +125,7 @@ For PHPUnit, you have to copy the file phpunit.xml.dist to phpunit.xml, then run
 ```
 phpunit -c phpunit.xml
 ```
-For PHPCS: 
+For PHPCS:
 ```
 phpcs --standard=ruleset.phpcs.xml --encoding=UTF-8 --report=summary --ignore=*/vendor/* -p .
 ```
