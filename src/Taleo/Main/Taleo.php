@@ -37,10 +37,6 @@ class Taleo {
     $this->login($token);
   }
 
-  private function endpoint($name) {
-    return $this->host_url . $name;
-  }
-
   public function login($token = NULL) {
     // The host url cannot be saved into a file, it can changes.
     $this->get_host_url();
@@ -161,7 +157,7 @@ class Taleo {
   public function request($url, $method = 'GET', $data = array()) {
 
     if(strpos($url, "https://") === FALSE) {
-      $url = $this->endpoint($url);
+      $url = $this->host_url . '/' . $url;
     }
 
     $client = $this->get_client($url);
