@@ -120,13 +120,13 @@ If there's any error, the icon above turns red.
 This is a good way to ensure a good quality of code.
 If you plan to participate into the development, you can run those tools manually.
  * For PHPUnit, you have to copy the file phpunit.xml.dist to phpunit.xml, then run:
-´´´
+```
 phpunit -c phpunit.xml
-´´´
- * For PHPCS: 
-´´´
+```
+* For PHPCS: 
+```
 phpcs --standard=ruleset.phpcs.xml --encoding=UTF-8 --report=summary --ignore=*/vendor/* -p .
-´´´
+```
 
 Thanks
 ======
