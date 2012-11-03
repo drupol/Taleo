@@ -8,10 +8,10 @@ if (!file_exists('config.inc.php')) {
 include 'config.inc.php';
 
 $taleo = new Taleo($user, $password, $company);
-$taleo->loglevel(\Monolog\Logger::DEBUG);
+$taleo->setLogConfig(\Monolog\Logger::DEBUG);
+$taleo->login();
 
 /*
-// Optional
 $taleo->login();
 
 $response = $taleo->request('object/infos');
@@ -60,4 +60,3 @@ $user = new \Taleo\Collections\Collection($response);
 */
 
 $taleo->logout();
-?>

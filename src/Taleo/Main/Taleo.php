@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Taleo
+ * Taleo PHP Library
  *
  * @package Taleo
  * @author Pol Dell'Aiera
@@ -11,19 +11,57 @@ namespace Taleo\Main;
 use Guzzle;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
-use Taleo\Exceptions\TaleoException;
 
+/**
+ * Default Taleo PHP Library class.
+ */
 class Taleo {
 
+  /**
+   * The default Dispatcher URL.
+   *
+   * @var string
+   */
   public $dispatcher_url = 'https://tbe.taleo.net/MANAGER/dispatcher/api/%1$s/serviceUrl';
+  /**
+   * The default Taleo API version.
+   *
+   * @var string
+   */
   public $taleo_api_version = 'v1';
 
+  /**
+   * URL to query, set by method setHostUrl().
+   * @see setHostUrl().
+   * @var
+   */
   private $host_url;
+  /**
+   * Token used in each query.
+   *
+   * @see login().
+   * @var
+   */
   private $token;
+  /**
+   * @var
+   */
   private $logger;
+  /**
+   * @var
+   */
   private $logger_level;
+  /**
+   * @var
+   */
+  private $logfile;
 
-  public function __construct($username, $password, $company, $token = NULL) {
+  /**
+   * @param string $username
+   * @param string $password
+   * @param string $company
+   */
+  public function __construct($username, $password, $company) {
     $this->company = $company;
     $this->username = $username;
     $this->password = $password;
@@ -31,39 +69,78 @@ class Taleo {
     // By default, the logger log only ALERT;
     // It can be changed by a call to the method loglevel($level) and
     // $level should be an integer, see the Monolog documentation.
-    $this->loglevel(Logger::DEBUG);
-
-    // Do the login.
-    $this->login($token);
+    $this->setLogConfig(Logger::ALERT);
   }
 
+  /**
+   * @param string $token Optional token.
+   * @return bool|string
+   */
   public function login($token = NULL) {
     // The host url cannot be saved into a file, it can changes.
-    $this->get_host_url();
+    if ($host_url = $this->getHostUrl()) {
+      $this->host_url = $host_url;
+    } else {
+      return FALSE;
+    }
 
     // The token is saved into a temporary file because you only have
     // a restricted amount of remote call per user per day.
-    if (!is_null($token)) {
-      $this->token = $token;
-    } else {
-      $this->token = $this->get_token();
+    if (is_null($token)) {
+      $token = $this->getToken();
     }
 
-    $this->logger->AddInfo("Login in, token set to : " . $this->token);
+    if ($token === FALSE) {
+      $this->logger->AddAlert("Bad login/password.");
+      return FALSE;
+    }
+
+    $this->token = $token;
+    $this->logger->AddInfo("Token set to : " . $this->token);
+    $this->logger->AddInfo("Login successful.");
     return $this->token;
   }
 
-  private function get_host_url() {
-    $url = sprintf($this->dispatcher_url, $this->taleo_api_version).'/'.$this->company;
-    if ($request = $this->request($url)) {
-      $response = json_decode($request);
-      $this->host_url = $response->response->URL;
-      $this->logger->AddInfo("Using Taleo API Version: " . $this->taleo_api_version);
-      $this->logger->AddInfo("Host url set to : " . $this->host_url);
+  /**
+   * @return bool
+   */
+  public function logout() {
+    if (isset($this->token)) {
+      $this->logger->AddInfo("Deleting token: " . $this->token);
+      $this->request('logout', 'POST');
     }
+    $name = sys_get_temp_dir().'/Taleo-';
+    foreach (glob($name.'*') as $file) {
+      $this->logger->AddDebug("Deleting token file: " . $file);
+      unlink($file);
+    }
+    unset($this->token);
+    $this->logger->AddInfo("Logout successful.");
+    return TRUE;
   }
 
-  private function get_token() {
+  /**
+   * @return string|bool
+   */
+  private function getHostUrl() {
+    $url = sprintf($this->dispatcher_url, $this->taleo_api_version) . '/' . $this->company;
+
+    if ($request = $this->request($url)) {
+      $this->host_url = json_decode($request)->response->URL;
+      $this->logger->AddInfo("Using Taleo API Version: " . $this->taleo_api_version);
+      $this->logger->AddInfo("Host url set to : " . $this->host_url);
+      return $this->host_url;
+    }
+
+    $this->logger->AddAlert("Using Taleo API Version: " . $this->taleo_api_version);
+    $this->logger->AddAlert("Impossible to get the host url, probably a bad company name.");
+    return FALSE;
+  }
+
+  /**
+   * @return bool|string
+   */
+  private function getToken() {
     $name = sys_get_temp_dir().'/Taleo-';
     $data = array();
 
@@ -97,19 +174,17 @@ class Taleo {
         $response = json_decode($response);
         $file = tempnam(sys_get_temp_dir(), 'Taleo-');
         file_put_contents($file, $response->response->authToken);
-        $this->logger->AddInfo("Token file is too old or unavailable.");
+        $this->logger->AddInfo("Token file is too old or unavailable. Creating a new one.");
       }
     }
 
-    $this->logger->AddInfo("Temporary token file: " . $file);
-    return file_exists($file) ? file_get_contents($file) : FALSE;
-  }
+    if (file_exists($file)) {
+      $this->logger->AddInfo("Temporary token file: " . $file);
+      return file_get_contents($file);
+    }
 
-  private function get_client($url) {
-    // Todo: Allow the user to set more option when initialisation
-    return new Guzzle\Service\Client($url, array(
-      'ssl.certificate_authority' => FALSE,
-    ));
+    $this->logger->AddInfo("Unable to get a valid token.");
+    return FALSE;
   }
 
   /**
@@ -121,9 +196,10 @@ class Taleo {
    *  CRITICAL => 500
    *  ALERT => 550
    *
-   * @param $level
+   * @param int $level Logger level.
+   * @param string $file Optional file.
    */
-  public function loglevel($level) {
+  public function setLogConfig($level, $file = NULL) {
     $levels = array(
       LOGGER::DEBUG,
       LOGGER::INFO,
@@ -133,11 +209,13 @@ class Taleo {
       LOGGER::ALERT
     );
 
+    $this->setLogFile($file);
+
     if (!in_array($level, $levels)) {
       $level = Logger::ALERT;
     }
 
-    $streamhandler = new StreamHandler($this->get_log_file(), $level);
+    $streamhandler = new StreamHandler($this->logfile, $level);
 
     if (isset($this->logger_level)) {
       $this->logger->popHandler();
@@ -147,20 +225,37 @@ class Taleo {
 
     $this->logger->pushHandler($streamhandler);
     $this->logger_level = $level;
+    $this->logger->AddInfo("Setting logfile to: " . $this->logfile);
     $this->logger->AddInfo("Setting log level to: " . $this->logger_level . "(".LOGGER::getLevelName($this->logger_level).")");
   }
 
-  public function get_log_file() {
-    return sys_get_temp_dir().'/Taleo.log';
+  /**
+   * @param $file
+   * @return bool
+   */
+  public function setLogFile($file) {
+    if (!is_writable($file)) {
+      $file = sys_get_temp_dir() . '/Taleo.log';
+    }
+    $this->logfile = $file;
+    return TRUE;
   }
 
+  /**
+   * @param $url
+   * @param string $method
+   * @param array $data
+   * @return bool|\Guzzle\Http\EntityBodyInterface|string
+   */
   public function request($url, $method = 'GET', $data = array()) {
 
     if(strpos($url, "https://") === FALSE) {
-      $url = $this->host_url . '/' . $url;
+      $url = $this->host_url . $url;
     }
 
-    $client = $this->get_client($url);
+    $client = new Guzzle\Service\Client($url, array(
+      'ssl.certificate_authority' => FALSE,
+    ));
 
     if ($method == 'GET') {
       $request = $client->get($url);
@@ -204,23 +299,21 @@ class Taleo {
   }
 
   // Aliases
+  /**
+   * @param $url
+   * @param array $data
+   * @return bool|\Guzzle\Http\EntityBodyInterface|string
+   */
   public function get($url, $data = array()) {
     return $this->request($url, 'GET', $data);
   }
 
+  /**
+   * @param $url
+   * @param array $data
+   * @return bool|\Guzzle\Http\EntityBodyInterface|string
+   */
   public function post($url, $data = array()) {
     return $this->request($url, 'POST', $data);
   }
-
-  public function logout() {
-    $this->logger->AddInfo("Logging out, deleting token: " . $this->token);
-    $this->request('logout', 'POST');
-    $name = sys_get_temp_dir().'/Taleo-';
-    foreach (glob($name.'*') as $file) {
-      $this->logger->AddDebug("Deleting token file: " . $file);
-      unlink($file);
-    }
-    unset($this->token);
-  }
-
 }
