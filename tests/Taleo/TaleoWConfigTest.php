@@ -28,10 +28,6 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
     $taleo->logout();
   }
 
-  /**
-   * @covers Taleo\login()
-   * @covers Taleo\logout()
-   */
   public function testLoginLogout() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
     $taleo->logout();
@@ -49,9 +45,6 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
     $this->assertEquals($file_content, $token);
   }
 
-  /**
-   * @covers Taleo\login()
-   */
   public function testLogin() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
     $taleo->logout();
@@ -66,9 +59,6 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
     $this->assertEquals($file_content, $token);
   }
 
-  /**
-   * @covers Taleo\logout()
-   */
   public function testLogout() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
     $taleo->logout();
@@ -77,9 +67,6 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
     $this->assertEquals(0, $count, 'No file ok.');
   }
 
-  /**
-   * @covers Taleo\get_host_url()
-   */
   public function testHostUrl() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
 

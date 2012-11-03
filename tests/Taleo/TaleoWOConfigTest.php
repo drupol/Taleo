@@ -12,9 +12,6 @@ class TaleoWOConfigTest extends \PHPUnit_Framework_TestCase {
     $this->config->company = $company;
   }
 
-  /**
-   * @covers Taleo\login()
-   */
   public function testBadLogin() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
     $taleo->logout();
