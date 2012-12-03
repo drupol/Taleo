@@ -11,14 +11,6 @@ $taleo = new Taleo($user, $password, $company);
 $taleo->setLogConfig(\Monolog\Logger::DEBUG);
 $taleo->login();
 
-$response = $taleo->request('object/info');
-echo print_r(json_decode($response),1)."\n";
-
-$response = $taleo->request('object/info/account');
-echo print_r(json_decode($response),1)."\n";
-
-$response = $taleo->request('object/account/description/standard');
-echo print_r(json_decode($response),1)."\n";
 /*
 $taleo->login();
 
