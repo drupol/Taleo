@@ -59,10 +59,10 @@ class Taleo {
   /**
    * @param string $username
    * @param string $password
-   * @param string $company
+   * @param string $orgCode
    */
-  public function __construct($username, $password, $company) {
-    $this->company = $company;
+  public function __construct($username, $password, $orgCode) {
+    $this->orgCode = $orgCode;
     $this->username = $username;
     $this->password = $password;
 
@@ -123,7 +123,7 @@ class Taleo {
    * @return string|bool
    */
   private function getHostUrl() {
-    $url = sprintf($this->dispatcher_url, $this->taleo_api_version) . '/' . $this->company;
+    $url = sprintf($this->dispatcher_url, $this->taleo_api_version) . '/' . $this->orgCode;
 
     if ($request = $this->request($url)) {
       $this->host_url = json_decode($request)->response->URL;
@@ -133,7 +133,7 @@ class Taleo {
     }
 
     $this->logger->AddAlert("Using Taleo API Version: " . $this->taleo_api_version);
-    $this->logger->AddAlert("Impossible to get the host url, probably a bad company name.");
+    $this->logger->AddAlert("Impossible to get the host url, probably a bad company code.");
     return FALSE;
   }
 
@@ -165,7 +165,7 @@ class Taleo {
       }
 
       $data = array(
-        "orgCode" => $this->company,
+        "orgCode" => $this->orgCode,
         "userName" => $this->username,
         "password" => $this->password
       );
@@ -237,6 +237,7 @@ class Taleo {
     if (!is_writable($file) && $file != 'php://stdout') {
       $file = sys_get_temp_dir() . '/Taleo.log';
     }
+
     $this->logfile = $file;
     return TRUE;
   }
@@ -316,4 +317,11 @@ class Taleo {
   public function post($url, $data = array()) {
     return $this->request($url, 'POST', $data);
   }
+
+  public function search($entity, $data) {
+    $url = 'object/'.$entity.'/search';
+    return $this->get($url, $data);
+  }
+
+
 }

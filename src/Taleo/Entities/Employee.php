@@ -9,6 +9,10 @@ class Employee implements Entity {
     $this->employee = $data;
   }
 
+  public function getSearchUrl() {
+    return 'object/employee/search';
+  }
+
   public function get($key = NULL) {
     if (!is_null($key)) {
       return $this->employee->$key;
