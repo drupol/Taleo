@@ -234,7 +234,7 @@ class Taleo {
    * @return bool
    */
   public function setLogFile($file) {
-    if (!is_writable($file)) {
+    if (!is_writable($file) && $file != 'php://stdout') {
       $file = sys_get_temp_dir() . '/Taleo.log';
     }
     $this->logfile = $file;
