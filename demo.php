@@ -67,7 +67,4 @@ $response = $taleo->get(
 $user = new \Taleo\Collections\Collection($response);
 */
 
-$helpers = new \Taleo\Helpers\Helpers();
-$helpers->search('employee');
-
 $taleo->logout();
