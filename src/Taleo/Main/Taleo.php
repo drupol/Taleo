@@ -260,7 +260,7 @@ class Taleo {
     }
 
     if ($method == 'POST') {
-      $request = $client->post($path, NULL, $data);
+      $request = $client->post($path, NULL, json_encode($data));
     }
 
     foreach ($parameters as $key => $value) {

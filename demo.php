@@ -54,8 +54,6 @@ $taleo->login();
 //$response = $taleo->get('object/candidate/search', array('status'=>1, 'addedWithin'=>7));
 //echo print_r(json_decode($response),1)."\n";
 // Create a candidate
-// This doesn't work yet, needs to be worked on.
-// TODO: get this work.
 /*
 $response = $taleo->post(
   'object/candidate',
