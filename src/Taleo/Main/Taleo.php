@@ -61,10 +61,10 @@ class Taleo {
    * @param string $password
    * @param string $orgCode
    */
-  public function __construct($username, $password, $orgCode) {
-    $this->orgCode = $orgCode;
-    $this->username = $username;
+  public function __construct($userName, $password, $orgCode) {
+    $this->userName = $userName;
     $this->password = $password;
+    $this->orgCode = $orgCode;
 
     // By default, the logger log only ALERT;
     // It can be changed by a call to the method loglevel($level) and
@@ -92,22 +92,21 @@ class Taleo {
 
     if ($token === FALSE) {
       $this->logger->AddAlert("Bad login/password.");
-      return FALSE;
+      return $this->logout(FALSE);
     }
 
     $this->token = $token;
-    $this->logger->AddInfo("Token set to : " . $this->token);
-    $this->logger->AddInfo("Login successful.");
+    $this->logger->AddInfo("Login successful.", (array) $this->token);
     return $this->token;
   }
 
   /**
    * @return bool
    */
-  public function logout() {
+  public function logout($value = TRUE) {
     if (isset($this->token)) {
       $this->logger->AddInfo("Deleting token: " . $this->token);
-      $this->request('logout', 'POST');
+      $this->post('logout');
     }
     $name = sys_get_temp_dir().'/Taleo-';
     foreach (glob($name.'*') as $file) {
@@ -116,7 +115,7 @@ class Taleo {
     }
     unset($this->token);
     $this->logger->AddInfo("Logout successful.");
-    return TRUE;
+    return (bool) $value;
   }
 
   /**
@@ -134,7 +133,7 @@ class Taleo {
 
     $this->logger->AddAlert("Using Taleo API Version: " . $this->taleo_api_version);
     $this->logger->AddAlert("Impossible to get the host url, probably a bad company code.");
-    return FALSE;
+    return $this->logout(FALSE);
   }
 
   /**
@@ -165,12 +164,12 @@ class Taleo {
       }
 
       $data = array(
-        "orgCode" => $this->orgCode,
-        "userName" => $this->username,
-        "password" => $this->password
+        "userName" => $this->userName,
+        "password" => $this->password,
+        "orgCode" => $this->orgCode
       );
 
-      if ($response = $this->post('login', $data)) {
+      if ($response = $this->request($this->host_url, 'login', 'POST', array(), $data)) {
         $response = json_decode($response);
         $file = tempnam(sys_get_temp_dir(), 'Taleo-');
         file_put_contents($file, $response->response->authToken);
@@ -248,53 +247,61 @@ class Taleo {
    * @param array $data
    * @return bool|\Guzzle\Http\EntityBodyInterface|string
    */
-  public function request($url, $method = 'GET', $data = array()) {
+  private function request($url, $path = '', $method = 'GET', $parameters = array(), $data = array()) {
 
-    if(strpos($url, "https://") === FALSE) {
-      $url = $this->host_url . $url;
-    }
+    $method = strtoupper($method);
 
     $client = new Guzzle\Service\Client($url, array(
       'ssl.certificate_authority' => FALSE,
     ));
 
     if ($method == 'GET') {
-      $request = $client->get($url);
-      foreach ($data as $key => $value) {
-        $request->getQuery()->set($key, $value);
-      }
+      $request = $client->get($path);
     }
 
     if ($method == 'POST') {
-      if (isset($this->token)) {
-        $data = array_merge($data, array('in0' => $this->token));
-      }
-      $request = $client->post($url, NULL, $data);
+      $request = $client->post($path, NULL, $data);
     }
 
-    if (isset($this->token)) {
-      $request->addCookie('authToken', $this->token);
+    foreach ($parameters as $key => $value) {
+      $request->getQuery()->set($key, $value);
     }
 
-    $this->logger->AddInfo("Request ".$method.": ".$request->getUrl());
+    switch ($path) {
+      case 'login':
+        break;
+      default:
+        $request->addCookie('authToken', $this->token);
+        $request->setHeader('Content-Type', 'application/json');
+    }
+
+    $this->logger->AddInfo("Request ".$method.": ".$request->getUrl(), (array) $data);
 
     try {
       $response = $request->send();
-      $output = $response->getBody(TRUE);
-      $this->logger->AddDebug("Response: ". $output);
     } catch (Guzzle\Http\Exception\BadResponseException $e) {
+      //TODO: Need a better error handling.
+      $code = $e->getRequest()->getResponse()->getStatusCode();
+      $message = 'Error ' . $code;
+      $status = (array) json_decode($e->getResponse()->getBody(TRUE))->status->detail;
+      $this->logger->AddAlert($message, $status);
       return FALSE;
     }
 
     if (!is_object($request)) {
+      //TODO: Need a better error handling.
+      $this->logger->AddDebug("Error during processing.");
       return FALSE;
     }
 
     if (!$response->getHeader('Content-Type')->hasValue('application/json;charset=UTF-8')) {
+      //TODO: Need a better error handling.
       $this->logger->addAlert("The Content-Type header is wrong.");
-      $this->logger->addAlert($output);
       return FALSE;
     }
+
+    $output = $response->getBody(TRUE);
+    $this->logger->AddDebug("Response: ". $output);
 
     return $output;
   }
@@ -305,8 +312,14 @@ class Taleo {
    * @param array $data
    * @return bool|\Guzzle\Http\EntityBodyInterface|string
    */
-  public function get($url, $data = array()) {
-    return $this->request($url, 'GET', $data);
+  public function get($path, $parameters = array()) {
+    if (!isset($this->token)) {
+      $this->logger->AddInfo("Request GET: " . $path);
+      $this->logger->AddDebug('Couldn\'t execute this request without being logged in.');
+      return FALSE;
+    }
+
+    return $this->request($this->host_url, $path, 'GET', $parameters, array());
   }
 
   /**
@@ -314,14 +327,18 @@ class Taleo {
    * @param array $data
    * @return bool|\Guzzle\Http\EntityBodyInterface|string
    */
-  public function post($url, $data = array()) {
-    return $this->request($url, 'POST', $data);
+  public function post($path, $data = array(), $parameters = array()) {
+    if (!isset($this->token)) {
+      $this->logger->AddInfo("Request POST: " . $path);
+      $this->logger->AddDebug('Couldn\'t execute this request without being logged in.');
+      return FALSE;
+    }
+    return $this->request($this->host_url, $path, 'POST', $parameters, $data);
   }
 
   public function search($entity, $data) {
     $url = 'object/'.$entity.'/search';
     return $this->get($url, $data);
   }
-
 
 }
