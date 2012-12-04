@@ -270,6 +270,7 @@ class Taleo {
     switch ($path) {
       case 'login':
         break;
+
       default:
         if (isset($this->token)) {
           $request->addCookie('authToken', $this->token);

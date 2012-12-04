@@ -55,48 +55,69 @@ $taleo = new Taleo($user, $password, $company);
 // If you change this to DEBUG, it will log almost everything.
 // By default, the logfile is in the default PHP temporary directory,
 // Under the name of "Taleo.log"
+// You can use a second parameter to define the file to use.
+// You can also use 'php://stdout' to debug quickly.
 // Do not forget to disable the DEBUG level when in Production !
-$taleo->loglevel(\Monolog\Logger::DEBUG);
-
-// Optional if no logout().
-$taleo->login();
-
-// Optional
-// We clear the token
-$taleo->logout();
+$taleo->loglevel(\Monolog\Logger::DEBUG, 'php://stdout');
 
 // A new token is generated.
-// Mandatory if a logout() is made.
+// Mandatory if a logout() is made previously.
 $taleo->login();
 
 // Example of calls
 // The default return format is JSON.
 
-$response = $taleo->get(
-  'object/requisition/search',
-  array('status' => 'open', 'cws' => 1)
-);
-$requisitions = new \Taleo\Collections\Collection($response);
+/**
+ * Requisitions
+ */
+$response = $taleo->get('object/requisition/search', array('status' => 'open', 'cws' => 1));
+echo print_r(json_decode($response),1)."\n";
+$response = $taleo->get('object/requisition/1189');
+echo print_r(json_decode($response),1)."\n";
 
-$response = $taleo->get(
-  'object/account/search'
-);
-$account = new \Taleo\Collections\Collection($response);
+/**
+ * Candidates
+ */
 
-$response = $taleo->get(
-  'object/candidate/search'
-);
-$candidate = new \Taleo\Collections\Collection($response);
+// Retrieve the last candidates within the last 7 days.
+$response = $taleo->get('object/candidate/search', array('status'=>1, 'addedWithin'=>7));
+echo print_r(json_decode($response),1)."\n";
 
-$response = $taleo->get(
-  'object/employee/search'
+// Create a candidate
+// This doesn't work yet, needs to be worked on.
+// TODO: get this work.
+/*
+$response = $taleo->post(
+  'object/candidate',
+  array(
+    'candidate' =>
+    array(
+      'city' => 'Toontown',
+      'country' => 'Be',
+      'resumeText' => 'This is just a test using new TALEO API.',
+      'email' => 'drupol@about.me',
+      'firstName' => 'Pol',
+      'lastName' => "Dell'Aiera",
+      'status' => 2,
+      'middleInitial' => 'P',
+      'cellPhone' => '0123456789',
+      'source' => 'Taleo PHP Library',
+    )
+  )
 );
-$employee = new \Taleo\Collections\Collection($response);
+echo print_r(json_decode($response),1)."\n";
+*/
 
-$response = $taleo->get(
-  'object/user/search'
-);
-$user = new \Taleo\Collections\Collection($response);
+/**
+ * Various
+ */
+$response = $taleo->get('object/info');
+
+/**
+ * Run the logout procedure
+ * This is optional.
+ */
+$taleo->logout();
 
 // If you call again your test file,
 // it will use the last valid token available.
