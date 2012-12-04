@@ -75,4 +75,49 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
 
     $this->assertEquals($url1, $url2);
   }
+
+  public function testCandidateCreationDeletion() {
+    $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
+    //$taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
+    $taleo->login();
+
+    $random_mail = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz1234567890'), 0, 6) . '@about.com';
+
+    $response = $taleo->post(
+      'object/candidate',
+      array(
+        'candidate' =>
+        array(
+          'city' => 'Toontown',
+          'country' => 'Be',
+          'resumeText' => 'This is just a test using new TALEO API.',
+          'email' => $random_mail,
+          'firstName' => 'Pol',
+          'lastName' => "Dell'Aiera",
+          'status' => 2,
+          'middleInitial' => 'P',
+          'cellPhone' => '0123456789',
+        )
+      )
+    );
+    $message = json_decode($response);
+
+    // Check if candidate has been successfully created.
+    $this->assertTrue($message->status->success);
+
+    // Get the candidate ID.
+    $candId = $message->response->candId;
+
+    // Check if the Candidate ID is numeric.
+    $this->assertTrue(is_numeric($candId));
+
+    // Delete the candidate.
+    $response = $taleo->delete('object/candidate/'.$candId);
+    $message = json_decode($response);
+
+    // Check if candidate has been successfully deleted.
+    $this->assertTrue($message->status->success);
+  }
+
+
 }

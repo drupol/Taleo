@@ -264,6 +264,10 @@ class Taleo {
       $request = $client->post($path, NULL, $data);
     }
 
+    if ($method == 'DELETE') {
+      $request = $client->delete($path);
+    }
+
     foreach ($parameters as $key => $value) {
       $request->getQuery()->set($key, $value);
     }
@@ -340,9 +344,17 @@ class Taleo {
     return $this->request($this->host_url, $path, 'POST', $parameters, $data);
   }
 
-  public function search($entity, $data) {
-    $url = 'object/'.$entity.'/search';
-    return $this->get($url, $data);
+  /**
+   * @param $url
+   * @param array $data
+   * @return bool|\Guzzle\Http\EntityBodyInterface|string
+   */
+  public function delete($path) {
+    if (!isset($this->token)) {
+      $this->logger->AddInfo("Request DELETE: " . $path);
+      $this->logger->AddDebug('Couldn\'t execute this request without being logged in.');
+      return FALSE;
+    }
+    return $this->request($this->host_url, $path, 'DELETE');
   }
-
 }
