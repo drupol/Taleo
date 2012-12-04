@@ -8,7 +8,7 @@ if (!file_exists('config.inc.php')) {
 include 'config.inc.php';
 
 $taleo = new Taleo($user, $password, $company);
-$taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
+$taleo->setLogConfig(\Monolog\Logger::DEBUG);
 $taleo->login();
 
 /* Create a candidate */
@@ -43,10 +43,25 @@ echo print_r(json_decode($response),1)."\n";
 //$response = $taleo->get('object/requisition/1189');
 
 /*
-$response = $taleo->get('object/info');
-$response = $taleo->get('object/requisition/search', 'GET', array('status' => 'open', 'cws' => 1));
-$response = $taleo->get('object/requisition/1189');
-*/
+$taleo->login();
+
+$response = $taleo->request('object/infos');
+echo print_r($response,1)."\n";
+$response = $taleo->request('object/requisition/search', 'GET', array('status' => 'open', 'cws' => 1));
+echo print_r($response, 1)."\n";
+$response = $taleo->request('object/requisition/1189');
+echo print_r($response, 1)."\n";
+
+// Optional
+$taleo->logout();
+
+$taleo->login();
+
+$response = $taleo->request('object/info');
+$response = $taleo->request('object/requisition/search', 'GET', array('status' => 'open', 'cws' => 1));
+$response = $taleo->request('object/requisition/1189');
+
+$taleo->logout();
 
 $response = $taleo->get(
   'object/requisition/search',
@@ -73,6 +88,6 @@ $response = $taleo->get(
   'object/user/search'
 );
 $user = new \Taleo\Collections\Collection($response);
-
+*/
 
 $taleo->logout();
