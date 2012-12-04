@@ -64,7 +64,7 @@ $response = $taleo->post(
       'country' => 'Be',
       'resumeText' => 'This is just a test using new TALEO API.',
       'email' => 'drupol@about.me',
-      'firstName' => 'Pol',
+      'firstName' => 'Polo',
       'lastName' => "Dell'Aiera",
       'status' => 2,
       'middleInitial' => 'P',
@@ -72,7 +72,33 @@ $response = $taleo->post(
     )
   )
 );
-echo print_r(json_decode($response),1)."\n";
+$message = json_decode($response);
+// Get the candidate ID.
+$candId = $message->response->candId;
+*/
+
+/**
+ * Update a candidate
+ */
+/*
+$response = $taleo->put(
+  'object/candidate/'.$candId,
+  array(
+    'candidate' =>
+    array(
+      'firstName' => 'Pol',
+    )
+  )
+);
+*/
+
+/**
+ * Delete a candidate
+ */
+/*
+$response = $taleo->delete(
+  'object/candidate/'.$candId,
+  );
 */
 
 
@@ -80,7 +106,6 @@ echo print_r(json_decode($response),1)."\n";
  * Various
  */
 //$response = $taleo->get('object/info');
-
 
 /**
  * Run the logout procedure
