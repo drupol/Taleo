@@ -84,9 +84,6 @@ $response = $taleo->get('object/candidate/search', array('status'=>1, 'addedWith
 echo print_r(json_decode($response),1)."\n";
 
 // Create a candidate
-// This doesn't work yet, needs to be worked on.
-// TODO: get this work.
-/*
 $response = $taleo->post(
   'object/candidate',
   array(
@@ -101,12 +98,10 @@ $response = $taleo->post(
       'status' => 2,
       'middleInitial' => 'P',
       'cellPhone' => '0123456789',
-      'source' => 'Taleo PHP Library',
     )
   )
 );
 echo print_r(json_decode($response),1)."\n";
-*/
 
 /**
  * Various
