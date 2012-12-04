@@ -70,10 +70,9 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
   public function testHostUrl() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
 
-    $url = sprintf($taleo->dispatcher_url, $taleo->taleo_api_version).'/'.$this->config->company;
-    $request = $taleo->request($url);
-    $response = json_decode($request);
+    $url1 = $taleo->getHostUrl();
+    $url2 = filter_var($url1, FILTER_VALIDATE_URL);
 
-    $this->assertNotEmpty($response->response->URL);
+    $this->assertEquals($url1, $url2);
   }
 }

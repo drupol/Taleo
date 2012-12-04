@@ -121,7 +121,7 @@ class Taleo {
   /**
    * @return string|bool
    */
-  private function getHostUrl() {
+  public function getHostUrl() {
     $url = sprintf($this->dispatcher_url, $this->taleo_api_version) . '/' . $this->orgCode;
 
     if ($request = $this->request($url)) {
@@ -271,7 +271,9 @@ class Taleo {
       case 'login':
         break;
       default:
-        $request->addCookie('authToken', $this->token);
+        if (isset($this->token)) {
+          $request->addCookie('authToken', $this->token);
+        }
         $request->setHeader('Content-Type', 'application/json');
     }
 
