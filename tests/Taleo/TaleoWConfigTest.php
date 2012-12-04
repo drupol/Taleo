@@ -111,6 +111,30 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
     // Check if the Candidate ID is numeric.
     $this->assertTrue(is_numeric($candId));
 
+    $firstName = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz1234567890'), 0, 10);
+
+    // Update candidate firstName
+    $response = $taleo->put(
+     'object/candidate/'.$candId,
+      array(
+        'candidate' => array(
+          'firstName' => $firstName
+        )
+      )
+    );
+    // Get candidate with firstName...
+    $response = $taleo->get('object/candidate/search', array('firstName' => $firstName));
+    $message = json_decode($response);
+
+    // Check if there is only one result.
+    $this->assertEquals($message->response->pagination->total, 1);
+
+    // Get the candidate object.
+    $candidate = $message->response->searchResults[0]->candidate;
+
+    // Check if the retrieved value is equal to the $firstName.
+    $this->assertEquals($candidate->firstName, $firstName);
+
     // Delete the candidate.
     $response = $taleo->delete('object/candidate/'.$candId);
     $message = json_decode($response);
@@ -118,6 +142,7 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
     // Check if candidate has been successfully deleted.
     $this->assertTrue($message->status->success);
   }
+
 
 
 }

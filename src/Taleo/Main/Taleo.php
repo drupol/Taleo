@@ -264,6 +264,11 @@ class Taleo {
       $request = $client->post($path, NULL, $data);
     }
 
+    if ($method == 'PUT') {
+      $data = is_array($data) ? json_encode($data) : $data;
+      $request = $client->put($path, NULL, $data);
+    }
+
     if ($method == 'DELETE') {
       $request = $client->delete($path);
     }
@@ -346,7 +351,6 @@ class Taleo {
 
   /**
    * @param $url
-   * @param array $data
    * @return bool|\Guzzle\Http\EntityBodyInterface|string
    */
   public function delete($path) {
@@ -357,4 +361,20 @@ class Taleo {
     }
     return $this->request($this->host_url, $path, 'DELETE');
   }
+
+  /**
+   * @param $url
+   * @param array $data
+   * @return bool|\Guzzle\Http\EntityBodyInterface|string
+   */
+  public function put($path, $data = array(), $parameters = array()) {
+    if (!isset($this->token)) {
+      $this->logger->AddInfo("Request PUT: " . $path);
+      $this->logger->AddDebug('Couldn\'t execute this request without being logged in.');
+      return FALSE;
+    }
+    return $this->request($this->host_url, $path, 'PUT', $parameters, $data);
+  }
+
+
 }
