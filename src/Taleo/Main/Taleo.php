@@ -169,7 +169,7 @@ class Taleo {
         "orgCode" => $this->orgCode
       );
 
-      if ($response = $this->request($this->host_url, 'login', 'POST', array(), $data)) {
+      if ($response = $this->request($this->host_url, 'login', 'POST', $data, array())) {
         $response = json_decode($response);
         $file = tempnam(sys_get_temp_dir(), 'Taleo-');
         file_put_contents($file, $response->response->authToken);

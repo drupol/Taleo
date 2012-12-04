@@ -69,7 +69,6 @@ $response = $taleo->post(
       'status' => 2,
       'middleInitial' => 'P',
       'cellPhone' => '0123456789',
-      'source' => 'Taleo PHP Library',
     )
   )
 );
