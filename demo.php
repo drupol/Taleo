@@ -51,8 +51,8 @@ $taleo->login();
  * Candidates
  */
 // Retrieve the last candidates within the last 7 days.
-$response = $taleo->get('object/candidate/search', array('email'=>'drupol@about.me'));
-echo print_r(json_decode($response),1)."\n";
+//$response = $taleo->get('object/candidate/search', array('status' => 1, 'addedWithin' => 7));
+//echo print_r(json_decode($response), 1)."\n";
 // Create a candidate
 /*
 $response = $taleo->post(
