@@ -10,11 +10,10 @@ Taleo sells its products entirely via a software-as-a-service (SaaS) model, in w
 As of August 2011, Taleo reported it had more than 5,000 customers ranging from small and medium-sized businesses to large global enterprises, including nearly half of the Fortune 100.
 On February 9, 2012, Oracle Corporation entered into an agreement to acquire Taleo Corporation.
 
-What is the Taleo library in PHP
-================================
-Taleo allow you to request through an defined API.
-Taleo is now slowly switching from a SOAP based API to a REST based API.
-This library allows you to connect to Taleo and request data.
+What is the Taleo PHP library
+=============================
+The Taleo PHP Library allow you to connect to the Taleo services using REST.
+It allows you to retrieve data but also create and alter existing data.
 
 Requirements
 ============
