@@ -83,7 +83,7 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
 
     $random_mail = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz1234567890'), 0, 6) . '@about.com';
 
-    $response = $taleo->post(
+    $message = $taleo->post(
       'object/candidate',
       array(
         'candidate' =>
@@ -100,13 +100,12 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
         )
       )
     );
-    $message = json_decode($response);
 
     // Check if candidate has been successfully created.
-    $this->assertTrue($message->status->success);
+    $this->assertTrue($message['status']['success']);
 
     // Get the candidate ID.
-    $candId = $message->response->candId;
+    $candId = $message['response']['candId'];
 
     // Check if the Candidate ID is numeric.
     $this->assertTrue(is_numeric($candId));
@@ -123,26 +122,22 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
       )
     );
     // Get candidate with firstName...
-    $response = $taleo->get('object/candidate/search', array('firstName' => $firstName));
-    $message = json_decode($response);
+    $message = $taleo->get('object/candidate/search', array('firstName' => $firstName));
 
     // Check if there is only one result.
-    $this->assertEquals($message->response->pagination->total, 1);
+    $this->assertEquals($message['response']['pagination']['total'], 1);
 
     // Get the candidate object.
-    $candidate = $message->response->searchResults[0]->candidate;
+    $candidate = $message['response']['searchResults'][0]['candidate'];
 
     // Check if the retrieved value is equal to the $firstName.
-    $this->assertEquals($candidate->firstName, $firstName);
+    $this->assertEquals($candidate['firstName'], $firstName);
 
     // Delete the candidate.
-    $response = $taleo->delete('object/candidate/'.$candId);
-    $message = json_decode($response);
+    $message = $taleo->delete('object/candidate/'.$candId);
 
     // Check if candidate has been successfully deleted.
-    $this->assertTrue($message->status->success);
+    $this->assertTrue($message['status']['success']);
   }
-
-
 
 }

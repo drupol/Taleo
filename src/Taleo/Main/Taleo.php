@@ -125,7 +125,7 @@ class Taleo {
     $url = sprintf($this->dispatcher_url, $this->taleo_api_version) . '/' . $this->orgCode;
 
     if ($request = $this->request($url)) {
-      $this->host_url = json_decode($request)->response->URL;
+      $this->host_url = $request['response']['URL'];
       $this->logger->AddInfo("Using Taleo API Version: " . $this->taleo_api_version);
       $this->logger->AddInfo("Host url set to : " . $this->host_url);
       return $this->host_url;
@@ -170,9 +170,8 @@ class Taleo {
       );
 
       if ($response = $this->request($this->host_url, 'login', 'POST', $data, array())) {
-        $response = json_decode($response);
         $file = tempnam(sys_get_temp_dir(), 'Taleo-');
-        file_put_contents($file, $response->response->authToken);
+        file_put_contents($file, $response['response']['authToken']);
         $this->logger->AddInfo("Token file is too old or unavailable. Creating a new one.");
       }
     }
@@ -313,10 +312,8 @@ class Taleo {
       return FALSE;
     }
 
-    $output = $response->getBody(TRUE);
-    $this->logger->AddDebug("Response: ". $output);
-
-    return $output;
+    $this->logger->AddDebug("Response: ". $response->getBody(TRUE));
+    return $response->json();
   }
 
   // Aliases

@@ -43,16 +43,16 @@ $taleo->login();
  * Requisitions
  */
 //$response = $taleo->get('object/requisition/search', array('status' => 'open', 'cws' => 1));
-//echo print_r(json_decode($response),1)."\n";
+//echo print_r($response,1)."\n";
 //$response = $taleo->get('object/requisition/1189');
-//echo print_r(json_decode($response),1)."\n";
+//echo print_r($response,1)."\n";
 
 /**
  * Candidates
  */
 // Retrieve the last candidates within the last 7 days.
-//$response = $taleo->get('object/candidate/search', array('status' => 1, 'addedWithin' => 7));
-//echo print_r(json_decode($response), 1)."\n";
+$response = $taleo->get('object/candidate/search', array('email' => 'pol.dellaiera@gmail.com'));
+echo print_r($response, 1)."\n";
 // Create a candidate
 /*
 $response = $taleo->post(
@@ -72,9 +72,8 @@ $response = $taleo->post(
     )
   )
 );
-$message = json_decode($response);
 // Get the candidate ID.
-$candId = $message->response->candId;
+$candId = $response->response->candId;
 */
 
 /**

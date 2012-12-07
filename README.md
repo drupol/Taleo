@@ -65,15 +65,15 @@ $taleo->loglevel(\Monolog\Logger::DEBUG, 'php://stdout');
 $taleo->login();
 
 // Example of calls
-// The default return format is JSON.
+// The default return format is an array converted from JSON.
 
 /**
  * Requisitions
  */
 $response = $taleo->get('object/requisition/search', array('status' => 'open', 'cws' => 1));
-echo print_r(json_decode($response),1)."\n";
+echo print_r($response,1)."\n";
 $response = $taleo->get('object/requisition/1189');
-echo print_r(json_decode($response),1)."\n";
+echo print_r($response,1)."\n";
 
 /**
  * Candidates
@@ -81,7 +81,7 @@ echo print_r(json_decode($response),1)."\n";
 
 // Retrieve the last candidates within the last 7 days.
 $response = $taleo->get('object/candidate/search', array('status'=>1, 'addedWithin'=>7));
-echo print_r(json_decode($response),1)."\n";
+echo print_r($response,1)."\n";
 
 // Create a candidate
 $response = $taleo->post(
@@ -101,7 +101,7 @@ $response = $taleo->post(
     )
   )
 );
-echo print_r(json_decode($response),1)."\n";
+echo print_r($response,1)."\n";
 
 /**
  * Various
