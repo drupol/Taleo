@@ -57,7 +57,7 @@ $taleo = new Taleo($user, $password, $company);
 // You can use a second parameter to define the file to use.
 // You can also use 'php://stdout' to debug quickly.
 // Do not forget to disable the DEBUG level when in Production !
-$taleo->loglevel(\Monolog\Logger::DEBUG, 'php://stdout');
+$taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
 
 // A new token is generated.
 // Mandatory if a logout() is made previously.
