@@ -5,6 +5,8 @@ namespace Taleo;
 class TaleoWOConfigTest extends \PHPUnit_Framework_TestCase {
 
   public function setUp() {
+    date_default_timezone_set('Europe/Brussels');
+
     $user = $password = $company = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz1234567890'), 0, 6);
     $this->config = new \stdClass();
     $this->config->user = $user;
