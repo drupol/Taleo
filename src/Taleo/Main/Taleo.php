@@ -152,8 +152,8 @@ class Taleo {
     $files = array_values($data);
     $timestamps = array_keys($data);
 
-    $file = isset($files[0]) ? $files[0]:NULL;
-    $timestamp = isset($timestamps[0]) ? $timestamps[0]:NULL;
+    $file = isset($files[0]) ? $files[0] : NULL;
+    $timestamp = isset($timestamps[0]) ? $timestamps[0] : NULL;
 
     // According to the REST API Doc:
     // Token is valid only for 4 hours.
@@ -249,10 +249,7 @@ class Taleo {
   private function request($url, $path = '', $method = 'GET', $parameters = array(), $data = array()) {
 
     $method = strtoupper($method);
-
-    $client = new Guzzle\Service\Client($url, array(
-      'ssl.certificate_authority' => FALSE,
-    ));
+    $client = new Guzzle\Service\Client($url, array('ssl.certificate_authority' => FALSE));
 
     if ($method == 'GET') {
       $request = $client->get($path);
