@@ -30,7 +30,7 @@ It will download the required library automatically and you'll be able to use Ta
 Documentation
 =============
  * Where it all began: https://github.com/shoxty/Taleo/issues/1
- * Taleo REST API documentation: http://cl.ly/011B34322v0t/download/TBE_REST_API_GUIDE_v12_4.pdf
+ * Taleo REST API documentation: http://www.oracle.com/technetwork/documentation/default-1841567.html
 
 Examples
 ========
