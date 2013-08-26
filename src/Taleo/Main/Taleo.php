@@ -11,6 +11,9 @@ namespace Taleo\Main;
 use Guzzle;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
+use Guzzle\Plugin\Cookie\Cookie;
+use Guzzle\Plugin\Cookie\CookiePlugin;
+use Guzzle\Plugin\Cookie\CookieJar\FileCookieJar;
 
 /**
  * Default Taleo PHP Library class.
@@ -36,13 +39,9 @@ class Taleo {
    * @var
    */
   private $host_url;
-  /**
-   * Token used in each query.
-   *
-   * @see login().
-   * @var
-   */
-  private $token;
+
+  private $temporary_namefile = 'taleo_';
+
   /**
    * @var
    */
@@ -55,6 +54,14 @@ class Taleo {
    * @var
    */
   private $logfile;
+  /**
+   * @var \Guzzle\Service\Client
+   */
+  private $client;
+  /**
+   * @var
+   */
+  private $cookiePlugin;
 
   /**
    * @param string $username
@@ -66,17 +73,24 @@ class Taleo {
     $this->password = $password;
     $this->orgCode = $orgCode;
 
+    $this->client = new Guzzle\Service\Client(array('ssl.certificate_authority' => FALSE));
+
     // By default, the logger log only ALERT;
     // It can be changed by a call to the method loglevel($level) and
     // $level should be an integer, see the Monolog documentation.
     $this->setLogConfig(Logger::ALERT);
   }
 
+  public function getTempNamefile() {
+    return $this->temporary_namefile;
+  }
+
+
   /**
    * @param string $token Optional token.
    * @return bool|string
    */
-  public function login($token = NULL) {
+  public function login() {
     // The host url cannot be saved into a file, it can changes.
     if ($host_url = $this->getHostUrl()) {
       $this->host_url = $host_url;
@@ -84,36 +98,57 @@ class Taleo {
       return FALSE;
     }
 
-    // The token is saved into a temporary file because you only have
-    // a restricted amount of remote call per user per day.
-    if (is_null($token)) {
-      $token = $this->getToken();
+    $this->initializeCookie();
+
+    if ($this->isLoggedIn()) {
+      $this->logger->AddInfo("Login successful.");
+      return TRUE;
     }
 
-    if ($token === FALSE) {
-      $this->logger->AddAlert("Bad login/password.");
-      return $this->logout(FALSE);
-    }
+    $credentials = array(
+      "userName" => $this->userName,
+      "password" => $this->password,
+      "orgCode" => $this->orgCode
+    );
 
-    $this->token = $token;
-    $this->logger->AddInfo("Login successful.", (array) $this->token);
-    return $this->token;
+    if ($response = $this->request($this->host_url, 'login', 'POST', $credentials)) {
+      $response = $response->json();
+      $parsed_url = parse_url($this->host_url);
+
+      //TODO: Do not use class variable for the cookieplugin.
+      $this->cookiePlugin->getCookieJar()->add(
+        new Cookie(
+          array(
+            'name' => 'authToken',
+            'value' => $response['response']['authToken'],
+            'domain' => $parsed_url['host'],
+            'expires' => time() + 4 * 60 * 60,
+            'discard' => FALSE
+          )
+        )
+      );
+
+      $this->client->addSubscriber($this->cookiePlugin);
+      $this->logger->AddInfo('Adding authentication cookie to cookie file.');
+      $this->logger->AddInfo('Login successful.');
+      return TRUE;
+    } else {
+      $this->logger->AddInfo('Unable to set cookie.');
+      $this->logger->AddAlert('Login failed.');
+      return $this->logout() ? FALSE : TRUE;
+    }
   }
 
   /**
    * @return bool
    */
   public function logout($value = TRUE) {
-    if (isset($this->token)) {
-      $this->logger->AddInfo("Deleting token: " . $this->token);
+    if ($this->isLoggedIn()) {
+      $this->logger->AddInfo("Logging out.");
       $this->post('logout');
+      $this->cookiePlugin->getCookieJar()->remove(null, null, 'authToken');
     }
-    $name = sys_get_temp_dir().'/Taleo-';
-    foreach (glob($name.'*') as $file) {
-      $this->logger->AddDebug("Deleting token file: " . $file);
-      unlink($file);
-    }
-    unset($this->token);
+
     $this->logger->AddInfo("Logout successful.");
     return (bool) $value;
   }
@@ -124,65 +159,68 @@ class Taleo {
   public function getHostUrl() {
     $url = sprintf($this->dispatcher_url, $this->taleo_api_version) . '/' . $this->orgCode;
 
-    if ($request = $this->request($url)) {
-      $this->host_url = $request['response']['URL'];
-      $this->logger->AddInfo("Using Taleo API Version: " . $this->taleo_api_version);
-      $this->logger->AddInfo("Host url set to : " . $this->host_url);
+    $this->client->setBaseUrl($url);
+
+    $this->logger->AddInfo('Using Taleo API Version: ' . $this->taleo_api_version);
+
+    if ($response = $this->request($url)) {
+      $response = $response->json();
+      $this->host_url = $response['response']['URL'];
+      $this->logger->AddInfo('Host url set to : ' . $this->host_url);
       return $this->host_url;
     }
 
-    $this->logger->AddAlert("Using Taleo API Version: " . $this->taleo_api_version);
-    $this->logger->AddAlert("Impossible to get the host url, probably a bad company code.");
+    $this->logger->AddAlert('Could not get host url.');
     return $this->logout(FALSE);
   }
 
-  /**
-   * @return bool|string
-   */
-  private function getToken() {
-    $name = sys_get_temp_dir().'/Taleo-';
-    $data = array();
+  private function initializeCookie() {
+    // Loop through each cookie file and check which one is valid.
+    $name = sys_get_temp_dir() . '/' . $this->getTempNamefile();
 
-    foreach (glob($name.'*') as $file) {
-      $timestamp = filemtime($file);
-      $data[$timestamp] = $file;
-    }
+    $files = glob($name . '*', GLOB_NOSORT);
+    array_multisort(array_map('filemtime', $files), SORT_NUMERIC, SORT_DESC, $files);
 
-    krsort($data);
-    $files = array_values($data);
-    $timestamps = array_keys($data);
-
-    $file = isset($files[0]) ? $files[0] : NULL;
-    $timestamp = isset($timestamps[0]) ? $timestamps[0] : NULL;
-
-    // According to the REST API Doc:
-    // Token is valid only for 4 hours.
-    if (!isset($file) OR (time() - (int) $timestamp - 4 * 60 * 60 > 0)) {
-      $name = sys_get_temp_dir().'/Taleo-';
-      foreach (glob($name.'*') as $file) {
-        unlink($file);
+    foreach ($files as $timestamp => $file) {
+      $this->logger->AddInfo("Testing cookie file: " . $file);
+      $this->cookiePlugin = new CookiePlugin(new FileCookieJar($file));
+      $this->client->addSubscriber($this->cookiePlugin);
+      if ($response = $this->get('object/info')) {
+        $this->logger->AddInfo("Valid cookie file found at " . $file);
+        return TRUE;
+        break;
       }
-
-      $data = array(
-        "userName" => $this->userName,
-        "password" => $this->password,
-        "orgCode" => $this->orgCode
-      );
-
-      if ($response = $this->request($this->host_url, 'login', 'POST', $data, array())) {
-        $file = tempnam(sys_get_temp_dir(), 'Taleo-');
-        file_put_contents($file, $response['response']['authToken']);
-        $this->logger->AddInfo("Token file is too old or unavailable. Creating a new one.");
-      }
+      $this->client->getEventDispatcher()->removeSubscriber($this->cookiePlugin);
+      unset($this->cookiePlugin);
+      unlink($file);
     }
 
-    if (file_exists($file)) {
-      $this->logger->AddInfo("Temporary token file: " . $file);
-      return file_get_contents($file);
+    $file = tempnam(sys_get_temp_dir(), $this->getTempNamefile());
+    $this->cookiePlugin = new CookiePlugin(new FileCookieJar($file));
+    $this->logger->AddInfo("Initializing new cookie file at " . $file);
+    return TRUE;
+  }
+
+  public function isLoggedIn() {
+    if ($cookie = $this->getAuthCookie()) {
+      return TRUE;
     }
 
-    $this->logger->AddInfo("Unable to get a valid token.");
     return FALSE;
+  }
+
+  public function getAuthCookie() {
+    if (!($this->cookiePlugin instanceof Guzzle\Plugin\Cookie\CookiePlugin)) {
+      return FALSE;
+    }
+
+    $cookie = $this->cookiePlugin->getCookieJar()->all(null, null, 'authToken', true, true);
+
+    if (is_array($cookie) && count($cookie) >= 1) {
+      if ($cookie[0] instanceof Guzzle\Plugin\Cookie\Cookie) {
+        return $cookie[0];
+      }
+    }
   }
 
   /**
@@ -247,26 +285,33 @@ class Taleo {
    * @return bool|\Guzzle\Http\EntityBodyInterface|string
    */
   private function request($url, $path = '', $method = 'GET', $parameters = array(), $data = array()) {
-
     $method = strtoupper($method);
-    $client = new Guzzle\Service\Client($url, array('ssl.certificate_authority' => FALSE));
+
+    $this->client->setBaseUrl($url);
+
+    if ($path != 'login' && $path != '' && $path != 'object/info') {
+      if (!$this->isLoggedIn()) {
+        $this->logger->AddDebug('Couldn\'t execute this request without being logged in.');
+        return FALSE;
+      }
+    }
 
     if ($method == 'GET') {
-      $request = $client->get($path);
+      $request = $this->client->get($path);
     }
 
     if ($method == 'POST') {
       $data = is_array($data) ? json_encode($data) : $data;
-      $request = $client->post($path, NULL, $data);
+      $request = $this->client->post($path, NULL, $data);
     }
 
     if ($method == 'PUT') {
       $data = is_array($data) ? json_encode($data) : $data;
-      $request = $client->put($path, NULL, $data);
+      $request = $this->client->put($path, NULL, $data);
     }
 
     if ($method == 'DELETE') {
-      $request = $client->delete($path);
+      $request = $this->client->delete($path);
     }
 
     foreach ($parameters as $key => $value) {
@@ -278,22 +323,19 @@ class Taleo {
         break;
 
       default:
-        if (isset($this->token)) {
-          $request->addCookie('authToken', $this->token);
-        }
         $request->setHeader('Content-Type', 'application/json');
     }
 
-    $this->logger->AddInfo("Request ".$method.": ".$request->getUrl(), (array) $data);
-
     try {
       $response = $request->send();
+      $this->logger->AddInfo('Request ' . $method . '(' . $response->getStatusCode() . '): ' . $request->getUrl(), (array) $data);
     } catch (Guzzle\Http\Exception\BadResponseException $e) {
       //TODO: Need a better error handling.
-      $code = $e->getRequest()->getResponse()->getStatusCode();
-      $message = 'Error ' . $code;
-      $status = (array) json_decode($e->getResponse()->getBody(TRUE))->status->detail;
-      $this->logger->AddAlert($message, $status);
+      $response = $e->getRequest()->getResponse();
+      $status = json_decode($response->getBody(TRUE));
+      $code = $status->status->detail->errorcode;
+      $message = $code . ': ' . $status->status->detail->errormessage;
+      $this->logger->AddError($message);
       return FALSE;
     }
 
@@ -310,7 +352,7 @@ class Taleo {
     }
 
     $this->logger->AddDebug("Response: ". $response->getBody(TRUE));
-    return $response->json();
+    return $response;
   }
 
   // Aliases
@@ -320,12 +362,6 @@ class Taleo {
    * @return bool|\Guzzle\Http\EntityBodyInterface|string
    */
   public function get($path, $parameters = array()) {
-    if (!isset($this->token)) {
-      $this->logger->AddInfo("Request GET: " . $path);
-      $this->logger->AddDebug('Couldn\'t execute this request without being logged in.');
-      return FALSE;
-    }
-
     return $this->request($this->host_url, $path, 'GET', $parameters, array());
   }
 
@@ -335,11 +371,6 @@ class Taleo {
    * @return bool|\Guzzle\Http\EntityBodyInterface|string
    */
   public function post($path, $data = array(), $parameters = array()) {
-    if (!isset($this->token)) {
-      $this->logger->AddInfo("Request POST: " . $path);
-      $this->logger->AddDebug('Couldn\'t execute this request without being logged in.');
-      return FALSE;
-    }
     return $this->request($this->host_url, $path, 'POST', $parameters, $data);
   }
 
@@ -348,11 +379,6 @@ class Taleo {
    * @return bool|\Guzzle\Http\EntityBodyInterface|string
    */
   public function delete($path) {
-    if (!isset($this->token)) {
-      $this->logger->AddInfo("Request DELETE: " . $path);
-      $this->logger->AddDebug('Couldn\'t execute this request without being logged in.');
-      return FALSE;
-    }
     return $this->request($this->host_url, $path, 'DELETE');
   }
 
@@ -362,11 +388,6 @@ class Taleo {
    * @return bool|\Guzzle\Http\EntityBodyInterface|string
    */
   public function put($path, $data = array(), $parameters = array()) {
-    if (!isset($this->token)) {
-      $this->logger->AddInfo("Request PUT: " . $path);
-      $this->logger->AddDebug('Couldn\'t execute this request without being logged in.');
-      return FALSE;
-    }
     return $this->request($this->host_url, $path, 'PUT', $parameters, $data);
   }
 
