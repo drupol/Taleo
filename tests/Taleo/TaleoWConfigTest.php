@@ -21,8 +21,8 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
     $this->config->company = $company;
 
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
-    $token = $taleo->login();
-    if (empty($token)) {
+    $taleo->login();
+    if (!$taleo->isLoggedIn()) {
       $this->markTestSkipped(
         'Bad credentials.'
       );
@@ -32,45 +32,45 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
 
   public function testLoginLogout() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
+    $taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
+    $taleo->login();
     $taleo->logout();
 
-    $name = sys_get_temp_dir().'/Taleo-';
-    $count = count(glob($name.'*'));
-    $this->assertEquals(0, $count);
+    $name = sys_get_temp_dir() . '/' . $taleo->getTempNamefile();
+    $this->assertFalse($taleo->isLoggedIn());
 
-    $token = $taleo->login();
+    $taleo->login();
     $files = glob($name.'*');
     $count = count($files);
-    $this->assertEquals(1, $count);
-
-    $file_content = file_get_contents($files[0]);
-    $this->assertEquals($file_content, $token);
+    $this->assertGreaterThanOrEqual(1, $count);
+    $this->assertTrue($taleo->isLoggedIn());
   }
 
   public function testLogin() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
+    $taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
+    $taleo->login();
     $taleo->logout();
 
-    $name = sys_get_temp_dir().'/Taleo-';
-    $token = $taleo->login();
-    $this->assertNotEmpty($token);
+    $taleo->login();
+    $name = sys_get_temp_dir() . '/' . $taleo->getTempNamefile();
     $files = glob($name.'*');
     $count = count($files);
-    $this->assertEquals(1, $count);
-    $file_content = file_get_contents($files[0]);
-    $this->assertEquals($file_content, $token);
+    $this->assertTrue($taleo->isLoggedIn());
+    $this->assertGreaterThanOrEqual(1, $count);
   }
 
   public function testLogout() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
+    $taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
+    $taleo->login();
     $taleo->logout();
-    $name = sys_get_temp_dir().'/Taleo-';
-    $count = count(glob($name.'*'));
-    $this->assertEquals(0, $count, 'No file ok.');
+    $this->assertFalse($taleo->isLoggedIn());
   }
 
   public function testHostUrl() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
+    $taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
 
     $url1 = $taleo->getHostUrl();
     $url2 = filter_var($url1, FILTER_VALIDATE_URL);
@@ -101,7 +101,7 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
           'cellPhone' => '0123456789',
         )
       )
-    );
+    )->json();
 
     // Check if candidate has been successfully created.
     $this->assertTrue($message['status']['success']);
@@ -123,8 +123,9 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
         )
       )
     );
+
     // Get candidate with firstName...
-    $message = $taleo->get('object/candidate/search', array('firstName' => $firstName));
+    $message = $taleo->get('object/candidate/search', array('firstName' => $firstName))->json();
 
     // Check if there is only one result.
     $this->assertEquals($message['response']['pagination']['total'], 1);
@@ -136,7 +137,7 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
     $this->assertEquals($candidate['firstName'], $firstName);
 
     // Delete the candidate.
-    $message = $taleo->delete('object/candidate/'.$candId);
+    $message = $taleo->delete('object/candidate/'.$candId)->json();
 
     // Check if candidate has been successfully deleted.
     $this->assertTrue($message['status']['success']);
