@@ -32,7 +32,6 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
 
   public function testLoginLogout() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
-    $taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
     $taleo->login();
     $taleo->logout();
 
@@ -48,7 +47,6 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
 
   public function testLogin() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
-    $taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
     $taleo->login();
     $taleo->logout();
 
@@ -62,7 +60,6 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
 
   public function testLogout() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
-    $taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
     $taleo->login();
     $taleo->logout();
     $this->assertFalse($taleo->isLoggedIn());
@@ -70,7 +67,6 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
 
   public function testHostUrl() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
-    $taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
 
     $url1 = $taleo->getHostUrl();
     $url2 = filter_var($url1, FILTER_VALIDATE_URL);
@@ -80,7 +76,6 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
 
   public function testCandidateCreationDeletion() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
-    //$taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
     $taleo->login();
 
     $random_mail = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz1234567890'), 0, 6) . '@about.com';

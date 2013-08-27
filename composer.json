@@ -15,7 +15,7 @@
     "require": {
         "php": ">=5.3.0",
         "guzzle/guzzle": ">=2.0.0",
-        "Monolog/monolog": "1.0.*"
+        "Monolog/monolog": "dev-master"
     },
     "autoload": {
         "psr-0": {"Taleo": "src/"}

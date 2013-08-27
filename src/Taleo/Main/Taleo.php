@@ -14,6 +14,9 @@ use Monolog\Handler\StreamHandler;
 use Guzzle\Plugin\Cookie\Cookie;
 use Guzzle\Plugin\Cookie\CookiePlugin;
 use Guzzle\Plugin\Cookie\CookieJar\FileCookieJar;
+use Guzzle\Log\MessageFormatter;
+use Guzzle\Log\PsrLogAdapter;
+use Guzzle\Plugin\Log\LogPlugin;
 
 /**
  * Default Taleo PHP Library class.
@@ -41,19 +44,6 @@ class Taleo {
   private $host_url;
 
   private $temporary_namefile = 'taleo_';
-
-  /**
-   * @var
-   */
-  private $logger;
-  /**
-   * @var
-   */
-  private $logger_level;
-  /**
-   * @var
-   */
-  private $logfile;
   /**
    * @var \Guzzle\Service\Client
    */
@@ -62,6 +52,10 @@ class Taleo {
    * @var
    */
   private $cookiePlugin;
+  /**
+   * @var
+   */
+  private $agent = "Taleo PHP Library version 2.0";
 
   /**
    * @param string $username
@@ -74,6 +68,7 @@ class Taleo {
     $this->orgCode = $orgCode;
 
     $this->client = new Guzzle\Service\Client(array('ssl.certificate_authority' => FALSE));
+    $this->client->setUserAgent($this->agent);
 
     // By default, the logger log only ALERT;
     // It can be changed by a call to the method loglevel($level) and
@@ -84,8 +79,6 @@ class Taleo {
   public function getTempNamefile() {
     return $this->temporary_namefile;
   }
-
-
   /**
    * @param string $token Optional token.
    * @return bool|string
@@ -101,7 +94,7 @@ class Taleo {
     $this->initializeCookie();
 
     if ($this->isLoggedIn()) {
-      $this->logger->AddInfo("Login successful.");
+      $this->logger->log(LOGGER::INFO, "Login successful.");
       return TRUE;
     }
 
@@ -129,12 +122,12 @@ class Taleo {
       );
 
       $this->client->addSubscriber($this->cookiePlugin);
-      $this->logger->AddInfo('Adding authentication cookie to cookie file.');
-      $this->logger->AddInfo('Login successful.');
+      $this->logger->log(LOGGER::INFO, 'Adding authentication cookie to cookie file.');
+      $this->logger->log(LOGGER::INFO, 'Login successful.');
       return TRUE;
     } else {
-      $this->logger->AddInfo('Unable to set cookie.');
-      $this->logger->AddAlert('Login failed.');
+      $this->logger->log(LOGGER::INFO, 'Unable to set cookie.');
+      $this->logger->log(LOGGER::INFO, 'Login failed.');
       return $this->logout() ? FALSE : TRUE;
     }
   }
@@ -144,12 +137,12 @@ class Taleo {
    */
   public function logout($value = TRUE) {
     if ($this->isLoggedIn()) {
-      $this->logger->AddInfo("Logging out.");
+      $this->logger->log(LOGGER::INFO, 'Logging out.');
       $this->post('logout');
-      $this->cookiePlugin->getCookieJar()->remove(null, null, 'authToken');
+      $this->cookiePlugin->getCookieJar()->remove(NULL, NULL, 'authToken');
     }
 
-    $this->logger->AddInfo("Logout successful.");
+    $this->logger->log(LOGGER::INFO, 'Logout successful.');
     return (bool) $value;
   }
 
@@ -161,16 +154,16 @@ class Taleo {
 
     $this->client->setBaseUrl($url);
 
-    $this->logger->AddInfo('Using Taleo API Version: ' . $this->taleo_api_version);
+    $this->logger->log(LOGGER::INFO, 'Using Taleo API Version: ' . $this->taleo_api_version);
 
     if ($response = $this->request($url)) {
       $response = $response->json();
       $this->host_url = $response['response']['URL'];
-      $this->logger->AddInfo('Host url set to : ' . $this->host_url);
+      $this->logger->log(LOGGER::INFO, 'Taleo endpoint set to : ' . $this->host_url);
       return $this->host_url;
     }
 
-    $this->logger->AddAlert('Could not get host url.');
+    $this->logger->log(LOGGER::ERROR, 'Could not Taleo endpoint.');
     return $this->logout(FALSE);
   }
 
@@ -182,11 +175,11 @@ class Taleo {
     array_multisort(array_map('filemtime', $files), SORT_NUMERIC, SORT_DESC, $files);
 
     foreach ($files as $timestamp => $file) {
-      $this->logger->AddInfo("Testing cookie file: " . $file);
+      $this->logger->log(LOGGER::INFO, 'Testing cookie file: ' . $file);
       $this->cookiePlugin = new CookiePlugin(new FileCookieJar($file));
       $this->client->addSubscriber($this->cookiePlugin);
       if ($response = $this->get('object/info')) {
-        $this->logger->AddInfo("Valid cookie file found at " . $file);
+        $this->logger->log(LOGGER::INFO, 'Valid cookie file found at: ' . $file);
         return TRUE;
         break;
       }
@@ -197,30 +190,24 @@ class Taleo {
 
     $file = tempnam(sys_get_temp_dir(), $this->getTempNamefile());
     $this->cookiePlugin = new CookiePlugin(new FileCookieJar($file));
-    $this->logger->AddInfo("Initializing new cookie file at " . $file);
+    $this->logger->log(LOGGER::INFO, 'Initializing new cookie file at: ' . $file);
     return TRUE;
   }
 
   public function isLoggedIn() {
-    if ($cookie = $this->getAuthCookie()) {
-      return TRUE;
-    }
-
-    return FALSE;
-  }
-
-  public function getAuthCookie() {
     if (!($this->cookiePlugin instanceof Guzzle\Plugin\Cookie\CookiePlugin)) {
       return FALSE;
     }
 
-    $cookie = $this->cookiePlugin->getCookieJar()->all(null, null, 'authToken', true, true);
+    $cookie = $this->cookiePlugin->getCookieJar()->all(NULL, NULL, 'authToken', TRUE, TRUE);
 
     if (is_array($cookie) && count($cookie) >= 1) {
       if ($cookie[0] instanceof Guzzle\Plugin\Cookie\Cookie) {
-        return $cookie[0];
+        return TRUE;
       }
     }
+
+    return FALSE;
   }
 
   /**
@@ -235,7 +222,7 @@ class Taleo {
    * @param int $level Logger level.
    * @param string $file Optional file.
    */
-  public function setLogConfig($level, $file = NULL) {
+  public function setLogConfig($level = LOGGER::ALERT, $file = NULL) {
     $levels = array(
       LOGGER::DEBUG,
       LOGGER::INFO,
@@ -245,37 +232,33 @@ class Taleo {
       LOGGER::ALERT
     );
 
-    $this->setLogFile($file);
-
-    if (!in_array($level, $levels)) {
-      $level = Logger::ALERT;
-    }
-
-    $streamhandler = new StreamHandler($this->logfile, $level);
-
-    if (isset($this->logger_level)) {
-      $this->logger->popHandler();
-    } else {
-      $this->logger = new Logger('Taleo');
-    }
-
-    $this->logger->pushHandler($streamhandler);
-    $this->logger_level = $level;
-    $this->logger->AddInfo("Setting logfile to: " . $this->logfile);
-    $this->logger->AddInfo("Setting log level to: " . $this->logger_level . "(".LOGGER::getLevelName($this->logger_level).")");
-  }
-
-  /**
-   * @param $file
-   * @return bool
-   */
-  public function setLogFile($file) {
     if (!is_writable($file) && $file != 'php://stdout') {
       $file = sys_get_temp_dir() . '/Taleo.log';
     }
 
-    $this->logfile = $file;
-    return TRUE;
+    if (!in_array($level, $levels)) {
+      $level = LOGGER::ALERT;
+    }
+
+    // Remove LogPlugin.
+    foreach(LogPlugin::getSubscribedEvents() as $key => $data) {
+      $listeners = $this->client->getEventDispatcher()->getListeners($key);
+      foreach($listeners as $listener) {
+        foreach($listener as $event) {
+          if ($event instanceof Guzzle\Plugin\Log\LogPlugin) {
+            $this->client->getEventDispatcher()->removeSubscriber($event);
+          }
+        }
+      }
+    }
+
+    // Add new LogPlugin
+    $this->logger = new Logger('Taleo');
+    $this->logger->pushHandler(new StreamHandler($file, $level));
+    $adapter = new Guzzle\Log\PsrLogAdapter($this->logger);
+    $this->client->addSubscriber(new LogPlugin($adapter));
+
+    $this->logger->log(LOGGER::INFO, 'Setting log file to: ' . $file . ' at level ' . $this->logger->getLevelName($level) . '(' . $level . ')');
   }
 
   /**
@@ -291,7 +274,7 @@ class Taleo {
 
     if ($path != 'login' && $path != '' && $path != 'object/info') {
       if (!$this->isLoggedIn()) {
-        $this->logger->AddDebug('Couldn\'t execute this request without being logged in.');
+        $this->logger->log(LOGGER::DEBUG, 'Could not execute this request without being logged in.');
         return FALSE;
       }
     }
@@ -328,30 +311,18 @@ class Taleo {
 
     try {
       $response = $request->send();
-      $this->logger->AddInfo('Request ' . $method . '(' . $response->getStatusCode() . '): ' . $request->getUrl(), (array) $data);
     } catch (Guzzle\Http\Exception\BadResponseException $e) {
-      //TODO: Need a better error handling.
-      $response = $e->getRequest()->getResponse();
-      $status = json_decode($response->getBody(TRUE));
-      $code = $status->status->detail->errorcode;
-      $message = $code . ': ' . $status->status->detail->errormessage;
-      $this->logger->AddError($message);
       return FALSE;
     }
 
     if (!is_object($request)) {
-      //TODO: Need a better error handling.
-      $this->logger->AddDebug("Error during processing.");
       return FALSE;
     }
 
     if (!$response->getHeader('Content-Type')->hasValue('application/json;charset=UTF-8')) {
-      //TODO: Need a better error handling.
-      $this->logger->addAlert("The Content-Type header is wrong.");
       return FALSE;
     }
 
-    $this->logger->AddDebug("Response: ". $response->getBody(TRUE));
     return $response;
   }
 

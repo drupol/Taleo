@@ -17,7 +17,7 @@ class TaleoWOConfigTest extends \PHPUnit_Framework_TestCase {
   public function testBadLogin() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
     $taleo->login();
-    //$this->assertFalse($taleo->isLoggedIn());
+    $this->assertFalse($taleo->isLoggedIn());
   }
 
 }
