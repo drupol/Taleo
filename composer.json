@@ -1,23 +1,25 @@
 {
-    "name": "Taleo",
-    "description": "Taleo PHP Library",
-    "keywords": ["Taleo", "remote"],
-    "homepage": "http://github.com/Polzme/Taleo",
-    "type": "library",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Pol Dell'Aiera",
-            "email": "pol.dellaiera@gmail.com",
-            "homepage": "http://about.me/drupol"
-        }
-    ],
-    "require": {
-        "php": ">=5.3.0",
-        "guzzle/guzzle": ">=2.0.0",
-        "Monolog/monolog": "dev-master"
-    },
-    "autoload": {
-        "psr-0": {"Taleo": "src/"}
+  "name": "taleo/lib",
+  "description": "Taleo PHP Library",
+  "keywords": ["Taleo", "remote"],
+  "homepage": "http://github.com/Polzme/Taleo",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Pol Dell'Aiera",
+      "email": "pol.dellaiera@gmail.com",
+      "homepage": "http://about.me/drupol",
+      "role": "Developer"
+
     }
+  ],
+  "require": {
+    "php": ">=5.3.0",
+    "guzzle/guzzle": ">=2.0.0",
+    "Monolog/monolog": "dev-master"
+  },
+  "autoload": {
+    "psr-0": {"Taleo": "src/"}
+  }
 }
