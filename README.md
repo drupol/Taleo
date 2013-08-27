@@ -44,8 +44,9 @@ $user = '******';
 $password = '******';
 $company = '******';
 
-// When call the library with the valid parameters,
-// a new token will be generated.
+/**
+ * Create the Taleo object with a valid user, password and company code.
+ */
 $taleo = new Taleo($user, $password, $company);
 
 // See the Monolog documentation to check which levels are available.
@@ -57,32 +58,46 @@ $taleo = new Taleo($user, $password, $company);
 // You can use a second parameter to define the file to use.
 // You can also use 'php://stdout' to debug quickly.
 // Do not forget to disable the DEBUG level when in Production !
+/**
+ * Optional: Set the log configuration.
+ * To update the settings, you just have to call the method with
+ * updated parameters.
+ *
+ * @param int $level Logger level.
+ *  \Monolog\Logger::DEBUG
+ *  \Monolog\Logger::INFO
+ *  \Monolog\Logger::WARNING
+ *  \Monolog\Logger::ERROR
+ *  \Monolog\Logger::CRITICAL
+ *  \Monolog\Logger::ALERT
+ * @param string $file Optional file.
+ *  This can be a file or 'php://stdout'.
+ *
+ */
 $taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
 
-// A new token is generated.
-// Mandatory if a logout() is made previously.
+/**
+ * Mandatory: Run the login procedure.
+ */
 $taleo->login();
 
-// Example of calls
-// The default return format is an array converted from JSON.
+/**
+ * Optional: Update the logging configuration
+ */
+$taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
 
 /**
  * Requisitions
  */
-$response = $taleo->get('object/requisition/search', array('status' => 'open', 'cws' => 1));
-echo print_r($response,1)."\n";
-$response = $taleo->get('object/requisition/1189');
-echo print_r($response,1)."\n";
+/*
+$response = $taleo->get('object/requisition/search', array('status' => 'open', 'cws' => 1))->json();
+$response = $taleo->get('object/requisition/1189')->json();
+*/
 
 /**
- * Candidates
+ * Create a candidate
  */
-
-// Retrieve the last candidates within the last 7 days.
-$response = $taleo->get('object/candidate/search', array('status'=>1, 'addedWithin'=>7));
-echo print_r($response,1)."\n";
-
-// Create a candidate
+/*
 $response = $taleo->post(
   'object/candidate',
   array(
@@ -92,7 +107,7 @@ $response = $taleo->post(
       'country' => 'Be',
       'resumeText' => 'This is just a test using new TALEO API.',
       'email' => 'drupol@about.me',
-      'firstName' => 'Pol',
+      'firstName' => 'Polo',
       'lastName' => "Dell'Aiera",
       'status' => 2,
       'middleInitial' => 'P',
@@ -100,23 +115,52 @@ $response = $taleo->post(
     )
   )
 );
-echo print_r($response,1)."\n";
+*/
+
+/**
+ * Search a candidate
+ */
+/*
+$response = $taleo->get('object/candidate/search', array('email' => 'drupol@about.me'))->json();
+$candid = $response['response']['searchResults'][0]['candidate']['candId'];
+*/
+
+/**
+ * Update a candidate
+ */
+/*
+$response = $taleo->put(
+  'object/candidate/'.$candid,
+  array(
+    'candidate' =>
+    array(
+      'firstName' => 'Pol',
+    )
+  )
+);
+*/
+
+/**
+ * Delete a candidate
+ */
+/*
+$response = $taleo->delete(
+  'object/candidate/' . $candid
+  );
+*/
 
 /**
  * Various
  */
-$response = $taleo->get('object/info');
+//$response = $taleo->get('object/info');
 
 /**
- * Run the logout procedure
- * This is optional.
+ * Optional: run the logout procedure
  */
-$taleo->logout();
-
-// If you call again your test file,
-// it will use the last valid token available.
+//$taleo->logout();
 ?>
 ```
+
 TODOs:
 ======
  * Providing more examples,
