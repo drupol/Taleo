@@ -19,7 +19,9 @@ include 'config.inc.php';
 $taleo = new Taleo($user, $password, $company);
 
 /**
- * Set the log configuration.
+ * Optional: Set the log configuration.
+ * To update the settings, you just have to call the method with
+ * updated parameters.
  *
  * @param int $level Logger level.
  *  \Monolog\Logger::DEBUG
@@ -30,30 +32,31 @@ $taleo = new Taleo($user, $password, $company);
  *  \Monolog\Logger::ALERT
  * @param string $file Optional file.
  *  This can be a file or 'php://stdout'.
+ *
  */
 $taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
 
 /**
- * Run the login procedure.
- * This is mandatory.
+ * Mandatory: Run the login procedure.
  */
 $taleo->login();
 
 /**
- * Requisitions
+ * Optional: Update the logging configuration
  */
-//$response = $taleo->get('object/requisition/search', array('status' => 'open', 'cws' => 1));
-//echo print_r($response,1)."\n";
-//$response = $taleo->get('object/requisition/1189');
-//echo print_r($response,1)."\n";
+$taleo->setLogConfig(\Monolog\Logger::DEBUG, 'php://stdout');
 
 /**
- * Candidates
+ * Requisitions
  */
-// Retrieve the last candidates within the last 7 days.
-$response = $taleo->get('object/candidate/search', array('email' => 'pol.dellaiera@gmail.com'));
-echo print_r($response, 1)."\n";
-// Create a candidate
+/*
+$response = $taleo->get('object/requisition/search', array('status' => 'open', 'cws' => 1))->json();
+$response = $taleo->get('object/requisition/1189')->json();
+*/
+
+/**
+ * Create a candidate
+ */
 /*
 $response = $taleo->post(
   'object/candidate',
@@ -72,8 +75,14 @@ $response = $taleo->post(
     )
   )
 );
-// Get the candidate ID.
-$candId = $response->response->candId;
+*/
+
+/**
+ * Search a candidate
+ */
+/*
+$response = $taleo->get('object/candidate/search', array('email' => 'drupol@about.me'))->json();
+$candid = $response['response']['searchResults'][0]['candidate']['candId'];
 */
 
 /**
@@ -81,7 +90,7 @@ $candId = $response->response->candId;
  */
 /*
 $response = $taleo->put(
-  'object/candidate/'.$candId,
+  'object/candidate/'.$candid,
   array(
     'candidate' =>
     array(
@@ -96,10 +105,9 @@ $response = $taleo->put(
  */
 /*
 $response = $taleo->delete(
-  'object/candidate/'.$candId,
+  'object/candidate/' . $candid
   );
 */
-
 
 /**
  * Various
@@ -107,7 +115,7 @@ $response = $taleo->delete(
 //$response = $taleo->get('object/info');
 
 /**
- * Run the logout procedure
- * This is optional.
+ * Optional: run the logout procedure
  */
-$taleo->logout();
+//$taleo->logout();
+

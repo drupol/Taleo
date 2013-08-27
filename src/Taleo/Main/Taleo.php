@@ -159,11 +159,11 @@ class Taleo {
     if ($response = $this->request($url)) {
       $response = $response->json();
       $this->host_url = $response['response']['URL'];
-      $this->logger->log(LOGGER::INFO, 'Taleo endpoint set to : ' . $this->host_url);
+      $this->logger->log(LOGGER::INFO, 'Taleo endpoint set to: ' . $this->host_url);
       return $this->host_url;
     }
 
-    $this->logger->log(LOGGER::ERROR, 'Could not Taleo endpoint.');
+    $this->logger->log(LOGGER::ERROR, 'Could not get Taleo endpoint.');
     return $this->logout(FALSE);
   }
 
@@ -174,7 +174,7 @@ class Taleo {
     $files = glob($name . '*', GLOB_NOSORT);
     array_multisort(array_map('filemtime', $files), SORT_NUMERIC, SORT_DESC, $files);
 
-    foreach ($files as $timestamp => $file) {
+    foreach ($files as $file) {
       $this->logger->log(LOGGER::INFO, 'Testing cookie file: ' . $file);
       $this->cookiePlugin = new CookiePlugin(new FileCookieJar($file));
       $this->client->addSubscriber($this->cookiePlugin);
