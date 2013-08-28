@@ -18,6 +18,7 @@ It allows you to retrieve data but also create and alter existing data.
 Requirements
 ============
  * PHP >= 5.3.x
+ * Composer, a dependency manager: http://getcomposer.org/
  * Guzzle, an HTTP client: http://guzzlephp.org/
  * Monolog, a logger: https://github.com/Seldaek/monolog
 
@@ -31,6 +32,7 @@ Documentation
 =============
  * Where it all began: https://github.com/shoxty/Taleo/issues/1
  * Taleo REST API documentation: http://www.oracle.com/technetwork/documentation/default-1841567.html
+ * Forums: http://knowledgeexchange.taleo.com/
 
 Examples
 ========
