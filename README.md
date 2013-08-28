@@ -166,7 +166,6 @@ TODOs:
  * Providing more examples,
  * Fixing bugs.
  * Run more tests with Travis,
- * Re organizing Taleo.php,
  * Provides helpers functions,
  * Comment all the function \o/.
 
