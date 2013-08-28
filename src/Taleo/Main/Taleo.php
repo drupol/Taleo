@@ -29,6 +29,7 @@ class Taleo {
    * @var string
    */
   public $dispatcher_url = 'https://tbe.taleo.net/MANAGER/dispatcher/api/%1$s/serviceUrl';
+
   /**
    * The default Taleo API version.
    *
@@ -39,28 +40,36 @@ class Taleo {
   /**
    * URL to query, set by method setHostUrl().
    * @see setHostUrl().
-   * @var
+   * @var string
    */
   private $host_url;
 
-  private $temporary_namefile = 'taleo_';
   /**
+   * Pattern of the cookie file used to store the authentication cookie.
+   * @var string
+   */
+  private $temporary_namefile = 'taleo_';
+
+  /**
+   * Guzzle client
    * @var \Guzzle\Service\Client
    */
   private $client;
+
   /**
-   * @var
-   */
-  private $cookiePlugin;
-  /**
-   * @var
+   * User agent
+   * @var string
    */
   private $agent = "Taleo PHP Library version 2.0";
 
   /**
-   * @param string $username
-   * @param string $password
-   * @param string $orgCode
+   * Constructor where the Guzzle client is initialized,
+   * the user agent is set and log system is by default
+   * set to Alert, so, it doesn't log anything.
+   *
+   * @param $userName
+   * @param $password
+   * @param $orgCode
    */
   public function __construct($userName, $password, $orgCode) {
     $this->userName = $userName;
@@ -76,84 +85,21 @@ class Taleo {
     $this->setLogConfig(Logger::ALERT);
   }
 
+  /**
+   * Returns the cookie file name
+   * @return string
+   */
   public function getTempNamefile() {
     return $this->temporary_namefile;
   }
-  /**
-   * @param string $token Optional token.
-   * @return bool|string
-   */
-  public function login() {
-    // The host url cannot be saved into a file, it can changes.
-    if ($host_url = $this->getHostUrl()) {
-      $this->host_url = $host_url;
-    } else {
-      return FALSE;
-    }
-
-    $this->initializeCookie();
-
-    if ($this->isLoggedIn()) {
-      $this->logger->log(LOGGER::INFO, "Login successful.");
-      return TRUE;
-    }
-
-    $credentials = array(
-      "userName" => $this->userName,
-      "password" => $this->password,
-      "orgCode" => $this->orgCode
-    );
-
-    if ($response = $this->request($this->host_url, 'login', 'POST', $credentials)) {
-      $response = $response->json();
-      $parsed_url = parse_url($this->host_url);
-
-      //TODO: Do not use class variable for the cookieplugin.
-      $this->cookiePlugin->getCookieJar()->add(
-        new Cookie(
-          array(
-            'name' => 'authToken',
-            'value' => $response['response']['authToken'],
-            'domain' => $parsed_url['host'],
-            'expires' => time() + 4 * 60 * 60,
-            'discard' => FALSE
-          )
-        )
-      );
-
-      $this->client->addSubscriber($this->cookiePlugin);
-      $this->logger->log(LOGGER::INFO, 'Adding authentication cookie to cookie file.');
-      $this->logger->log(LOGGER::INFO, 'Login successful.');
-      return TRUE;
-    } else {
-      $this->logger->log(LOGGER::INFO, 'Unable to set cookie.');
-      $this->logger->log(LOGGER::INFO, 'Login failed.');
-      return $this->logout() ? FALSE : TRUE;
-    }
-  }
 
   /**
-   * @return bool
-   */
-  public function logout($value = TRUE) {
-    if ($this->isLoggedIn()) {
-      $this->logger->log(LOGGER::INFO, 'Logging out.');
-      $this->post('logout');
-      $this->cookiePlugin->getCookieJar()->remove(NULL, NULL, 'authToken');
-    }
-
-    $this->logger->log(LOGGER::INFO, 'Logout successful.');
-    return (bool) $value;
-  }
-
-  /**
+   * Get the Taleo endpoint URL.
    * @return string|bool
    */
   public function getHostUrl() {
     $url = sprintf($this->dispatcher_url, $this->taleo_api_version) . '/' . $this->orgCode;
-
     $this->client->setBaseUrl($url);
-
     $this->logger->log(LOGGER::INFO, 'Using Taleo API Version: ' . $this->taleo_api_version);
 
     if ($response = $this->request($url)) {
@@ -164,49 +110,22 @@ class Taleo {
     }
 
     $this->logger->log(LOGGER::ERROR, 'Could not get Taleo endpoint.');
-    return $this->logout(FALSE);
+    return FALSE;
   }
 
-  private function initializeCookie() {
-    // Loop through each cookie file and check which one is valid.
-    $name = sys_get_temp_dir() . '/' . $this->getTempNamefile();
-
-    $files = glob($name . '*', GLOB_NOSORT);
-    array_multisort(array_map('filemtime', $files), SORT_NUMERIC, SORT_DESC, $files);
-
-    foreach ($files as $file) {
-      $this->logger->log(LOGGER::INFO, 'Testing cookie file: ' . $file);
-      $this->cookiePlugin = new CookiePlugin(new FileCookieJar($file));
-      $this->client->addSubscriber($this->cookiePlugin);
-      if ($response = $this->get('object/info')) {
-        $this->logger->log(LOGGER::INFO, 'Valid cookie file found at: ' . $file);
-        return TRUE;
-        break;
-      }
-      $this->client->getEventDispatcher()->removeSubscriber($this->cookiePlugin);
-      unset($this->cookiePlugin);
-      unlink($file);
-    }
-
-    $file = tempnam(sys_get_temp_dir(), $this->getTempNamefile());
-    $this->cookiePlugin = new CookiePlugin(new FileCookieJar($file));
-    $this->logger->log(LOGGER::INFO, 'Initializing new cookie file at: ' . $file);
-    return TRUE;
-  }
-
-  public function isLoggedIn() {
-    if (!($this->cookiePlugin instanceof Guzzle\Plugin\Cookie\CookiePlugin)) {
-      return FALSE;
-    }
-
-    $cookie = $this->cookiePlugin->getCookieJar()->all(NULL, NULL, 'authToken', TRUE, TRUE);
-
-    if (is_array($cookie) && count($cookie) >= 1) {
-      if ($cookie[0] instanceof Guzzle\Plugin\Cookie\Cookie) {
-        return TRUE;
+  /**
+   * Instead of saving the cookiePlugin in a class variable, use this method
+   * to get it.
+   *
+   * @return bool|CookiePlugin
+   */
+  private function getCookiePluginObject() {
+    $listeners = $this->client->getEventDispatcher()->getListeners('request.before_send');
+    foreach($listeners as $listener) {
+      if ($listener[0] instanceof Guzzle\Plugin\Cookie\CookiePlugin) {
+        return $listener[0];
       }
     }
-
     return FALSE;
   }
 
@@ -262,10 +181,131 @@ class Taleo {
   }
 
   /**
+   * Login method, returns TRUE on successful login or FALSE in any other
+   * cases.
+   *
+   * @return bool
+   */
+  public function login() {
+    // Check if we can retrieve the Taleo endpoint
+    if ($host_url = $this->getHostUrl()) {
+      $this->host_url = $host_url;
+    } else {
+      return FALSE;
+    }
+
+    // Check if we are already logged in.
+    if ($this->isLoggedIn()) {
+      $this->logger->log(LOGGER::INFO, "Login successful.");
+      return TRUE;
+    }
+
+    // Loop through each cookie file and check which one is valid.
+    // It will also delete the ones who are invalids.
+    $name = sys_get_temp_dir() . '/' . $this->getTempNamefile();
+    $valid_file = NULL;
+
+    $files = glob($name . '*', GLOB_NOSORT);
+    array_multisort(array_map('filemtime', $files), SORT_NUMERIC, SORT_DESC, $files);
+
+    foreach ($files as $file) {
+      $this->logger->log(LOGGER::INFO, 'Testing cookie file: ' . $file);
+      $cookiePlugin = new CookiePlugin(new FileCookieJar($file));
+      $this->client->addSubscriber($cookiePlugin);
+      if ($response = $this->get('object/info')) {
+        $this->logger->log(LOGGER::INFO, 'Valid cookie file found at: ' . $file);
+        return TRUE;
+      }
+      $this->logger->log(LOGGER::INFO, 'Invalid cookie file found at: ' . $file);
+      $this->client->getEventDispatcher()->removeSubscriber($cookiePlugin);
+      unset($cookiePlugin);
+      unlink($file);
+    }
+
+    $credentials = array(
+      "userName" => $this->userName,
+      "password" => $this->password,
+      "orgCode" => $this->orgCode
+    );
+
+    // Now trying to login on Taleo using the credentials.
+    if ($response = $this->request($this->host_url, 'login', 'POST', $credentials)) {
+
+      // If no valie cookie file is found, let's create a new one.
+      $valid_file = tempnam(sys_get_temp_dir(), $this->getTempNamefile());
+      $this->logger->log(LOGGER::INFO, 'Initializing new cookie file at: ' . $valid_file);
+
+      $response = $response->json();
+      $parsed_url = parse_url($this->host_url);
+
+      // Use Guzzle Plugin system to include the cookie on each request.
+      $cookiePlugin = new CookiePlugin(new FileCookieJar($valid_file));
+      $cookiePlugin->getCookieJar()->add(
+        new Cookie(
+          array(
+            'name' => 'authToken',
+            'value' => $response['response']['authToken'],
+            'domain' => $parsed_url['host'],
+            'expires' => time() + 4 * 60 * 60,
+            'discard' => FALSE
+          )
+        )
+      );
+      $this->client->addSubscriber($cookiePlugin);
+
+      $this->logger->log(LOGGER::INFO, 'Adding authentication cookie to cookie file.');
+      $this->logger->log(LOGGER::INFO, 'Login successful.');
+      return TRUE;
+    } else {
+      $this->logger->log(LOGGER::INFO, 'Unable to set cookie.');
+      $this->logger->log(LOGGER::INFO, 'Login failed.');
+      return $this->logout() ? FALSE : TRUE;
+    }
+  }
+
+  /**
+   * @param bool $value
+   * @return bool
+   */
+  public function logout($value = TRUE) {
+    if ($this->isLoggedIn()) {
+      $this->logger->log(LOGGER::INFO, 'Logging out.');
+      $this->post('logout');
+      $this->client->getEventDispatcher()->removeSubscriber($this->getCookiePluginObject());
+    }
+
+    $this->logger->log(LOGGER::INFO, 'Logout successful.');
+    return (bool) $value;
+  }
+
+  /**
+   * Check if we are logged in or not.
+   *
+   * @return bool
+   */
+  public function isLoggedIn() {
+    if (!($cookiePlugin = $this->getCookiePluginObject())) {
+      return FALSE;
+    }
+
+    $cookie = $cookiePlugin->getCookieJar()->all(NULL, NULL, 'authToken', TRUE, TRUE);
+
+    if (is_array($cookie) && count($cookie) >= 1) {
+      if ($cookie[0] instanceof Guzzle\Plugin\Cookie\Cookie) {
+        return TRUE;
+      }
+    }
+
+    return FALSE;
+  }
+
+  /**
    * @param $url
+   * @param string $path
    * @param string $method
+   * @param array $parameters
    * @param array $data
-   * @return bool|\Guzzle\Http\EntityBodyInterface|string
+   * @return bool|Guzzle\Http\Message\Response
    */
   private function request($url, $path = '', $method = 'GET', $parameters = array(), $data = array()) {
     $method = strtoupper($method);
@@ -328,39 +368,39 @@ class Taleo {
 
   // Aliases
   /**
-   * @param $url
-   * @param array $data
-   * @return bool|\Guzzle\Http\EntityBodyInterface|string
+   * @param $path
+   * @param array $parameters
+   * @return bool|Guzzle\Http\Message\Response
    */
   public function get($path, $parameters = array()) {
     return $this->request($this->host_url, $path, 'GET', $parameters, array());
   }
 
   /**
-   * @param $url
+   * @param $path
    * @param array $data
-   * @return bool|\Guzzle\Http\EntityBodyInterface|string
+   * @param array $parameters
+   * @return bool|Guzzle\Http\Message\Response
    */
   public function post($path, $data = array(), $parameters = array()) {
     return $this->request($this->host_url, $path, 'POST', $parameters, $data);
   }
 
   /**
-   * @param $url
-   * @return bool|\Guzzle\Http\EntityBodyInterface|string
+   * @param $path
+   * @return bool|Guzzle\Http\Message\Response
    */
   public function delete($path) {
     return $this->request($this->host_url, $path, 'DELETE');
   }
 
   /**
-   * @param $url
+   * @param $path
    * @param array $data
-   * @return bool|\Guzzle\Http\EntityBodyInterface|string
+   * @param array $parameters
+   * @return bool|Guzzle\Http\Message\Response
    */
   public function put($path, $data = array(), $parameters = array()) {
     return $this->request($this->host_url, $path, 'PUT', $parameters, $data);
   }
-
-
 }

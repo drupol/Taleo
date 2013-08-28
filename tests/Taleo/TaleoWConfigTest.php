@@ -33,23 +33,17 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
   public function testLoginLogout() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
     $taleo->login();
-    $taleo->logout();
-
-    $name = sys_get_temp_dir() . '/' . $taleo->getTempNamefile();
-    $this->assertFalse($taleo->isLoggedIn());
-
-    $taleo->login();
-    $files = glob($name.'*');
-    $count = count($files);
-    $this->assertGreaterThanOrEqual(1, $count);
     $this->assertTrue($taleo->isLoggedIn());
+    $taleo->logout();
+    $this->assertFalse($taleo->isLoggedIn());
+    $taleo->login();
+    $this->assertTrue($taleo->isLoggedIn());
+    $taleo->logout();
+    $this->assertFalse($taleo->isLoggedIn());
   }
 
   public function testLogin() {
     $taleo = new \Taleo\Main\Taleo($this->config->user, $this->config->password, $this->config->company);
-    $taleo->login();
-    $taleo->logout();
-
     $taleo->login();
     $name = sys_get_temp_dir() . '/' . $taleo->getTempNamefile();
     $files = glob($name.'*');
@@ -137,5 +131,4 @@ class TaleoWConfigTest extends \PHPUnit_Framework_TestCase {
     // Check if candidate has been successfully deleted.
     $this->assertTrue($message['status']['success']);
   }
-
 }
