@@ -1,5 +1,11 @@
 Taleo PHP Library
 =================
+[![Build Status](https://secure.travis-ci.org/Polzme/Taleo.png)](http://travis-ci.org/Polzme/Taleo)
+[![Coverage Status](https://coveralls.io/repos/Polzme/Taleo/badge.png?branch=master)](https://coveralls.io/r/Polzme/Taleo?branch=master)
+[![Latest Stable Version](https://poser.pugx.org/taleo/lib/v/stable.png)](https://packagist.org/packages/taleo/lib)
+[![Total Downloads](https://poser.pugx.org/taleo/lib/downloads.png)](https://packagist.org/packages/taleo/lib)
+[![Latest Unstable Version](https://poser.pugx.org/taleo/lib/v/unstable.png)](https://packagist.org/packages/taleo/lib)
+[![License](https://poser.pugx.org/taleo/lib/license.png)](https://packagist.org/packages/taleo/lib)
 
 What is Taleo (from Wikipedia) ?
 ================================
@@ -167,28 +173,8 @@ TODOs:
 ======
  * Providing more examples,
  * Fixing bugs.
- * Run more tests with Travis,
  * Provides helpers functions,
  * Comment all the function \o/.
-
-Unit testing and continuous integration
-=======================================
-[![Build Status](https://secure.travis-ci.org/Polzme/Taleo.png)](http://travis-ci.org/Polzme/Taleo)
-
-Taleo PHP Library is using Travis (https://travis-ci.org/), a continuous integration tool.
-Each time a commit is made, Travis download the tree, run PHPUnit tests and a code analysis tools (PHP CodeSniffer).
-If there's any error, the icon above turns red.
-This is a good way to ensure a good quality of code.
-If you plan to participate into the development, you can run those tools manually.
-
-For PHPUnit, you have to copy the file phpunit.xml.dist to phpunit.xml, then run:
-```
-phpunit -c phpunit.xml
-```
-For PHPCS:
-```
-phpcs --standard=ruleset.phpcs.xml --encoding=UTF-8 --report=summary --ignore=*/vendor/* -p .
-```
 
 Thanks
 ======
