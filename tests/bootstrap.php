@@ -1,4 +1,11 @@
 <?php
 
-$loader = require_once __DIR__ . "/../vendor/autoload.php";
+$autoloadFile = __DIR__ . '/../vendor/autoload.php';
+if (!file_exists($autoloadFile)) {
+  throw new RuntimeException('Install dependencies to run test suite.');
+}
+require_once $autoloadFile;
+
+$loader = new \Composer\Autoload\ClassLoader();
 $loader->add('Taleo\\', __DIR__);
+$loader->register();

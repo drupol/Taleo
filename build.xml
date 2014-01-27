@@ -29,7 +29,7 @@
         <mkdir dir="${builddir}/coverage"/>
         <mkdir dir="${builddir}/logs"/>
         <mkdir dir="${builddir}/pdepend"/>
-        <mkdir dir="${builddir}/test"/>
+        <mkdir dir="${builddir}/tests"/>
     </target>
 
     <target name="lint" depends="php-check" description="Perform syntax check of source code files">
@@ -38,7 +38,7 @@
             <fileset dir="${basedir}/src">
                 <include name="**/*.php" />
             </fileset>
-            <fileset dir="${basedir}/test">
+            <fileset dir="${basedir}/tests">
                 <include name="**/*.php" />
             </fileset>
         </apply>
