@@ -1,13 +1,16 @@
 language: php
 
 php:
-  - 5.3
-  - 5.4
+  - "5.5"
+  - "5.4"
+  - "5.3"
 
 before_script:
-  - pyrus install http://phptal.org/latest.tar.gz
-  - pear install pear/PHP_CodeSniffer
-  - phpenv rehash
+   - composer install --prefer-dist --dev
+   - ant prepare
+#  - pyrus install http://phptal.org/latest.tar.gz
+#  - pear install pear/PHP_CodeSniffer
+#  - phpenv rehash
 #    - pyrus channel-discover pear.pdepend.org
 #    - pyrus install pdepend/PHP_Depend
 #    - phpenv rehash
@@ -18,10 +21,13 @@ before_script:
 #    - pyrus channel-discover pear.phpunit.de
 #    - pyrus install phpunit/phpcpd
 #    - phpenv rehash
-  - curl -s http://getcomposer.org/installer | php
-  - php composer.phar install
-  - cp phpunit.xml.dist phpunit.xml
+#  - curl -s http://getcomposer.org/installer | php
+#  - php composer.phar install
+#  - cp phpunit.xml.dist phpunit.xml
 
-script:
- - phpcs --standard=ruleset.phpcs.xml --encoding=UTF-8 --report=summary --ignore=*/vendor/* -p .
- - phpunit -c phpunit.xml
+#script:
+# - phpcs --standard=ruleset.phpcs.xml --encoding=UTF-8 --report=summary --ignore=*/vendor/* -p .
+# - phpunit -c phpunit.xml
+
+after_script:
+  - php vendor/bin/coveralls -v
